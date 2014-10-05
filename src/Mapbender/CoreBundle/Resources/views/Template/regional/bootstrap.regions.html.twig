@@ -12,7 +12,9 @@
 
         <tr>
             {% if block('left') is not empty %}
-                <td class="region left" style="position: relative"><div class="content">{% block left %}{% endblock %}</div><a href="#" onclick="regions.left.toggle()" class="btn btn-icon fa-angle-double-left btn-toggle right-region-toggle"></a></td>
+                <td class="region left" style="position: relative"><div class="content">{% block left %}{% endblock %}</div>
+                    {#<a href="#" onclick="regions.left.toggle()" class="btn btn-icon fa-angle-double-left btn-toggle right-region-toggle"></a>#}
+                </td>
             {% endif %}
 
             {% if block('center') is not empty %}
@@ -44,7 +46,7 @@
                 region.data('height', region.height());
                 region.data('width', region.width());
 
-                region.find(' > .content').css('background-color','#'+(i*20)+''+(i*20)+''+(i*20)+'' )
+//                region.find(' > .content').css('background-color','#'+(i*20)+''+(i*20)+''+(i*20)+'' )
                 i++;
 
                 region.bind('close', function (e) {
@@ -119,4 +121,5 @@
             calculate();
         })
     </script>
+    {% block htmlFooter %}{% endblock %}
 {% endblock %}

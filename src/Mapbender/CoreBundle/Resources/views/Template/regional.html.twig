@@ -1,22 +1,128 @@
 {% extends 'MapbenderCoreBundle:Template/regional:bootstrap.regions.html.twig' %}
 
+{% block title %}BKG UI Elements{% endblock %}
+
+{% block favicon %}{{ asset('favicon.ico') }}{% endblock %}
+
+{% block head %}
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,600italic' rel='stylesheet' type='text/css'>
+  <link href='{{ asset('bundles/mapbendercore/regional/fonts/bkg-flat/flaticon.css') }}' rel='stylesheet' type='text/css'>
+  <script type="text/javascript" language="JavaScript">
+    $(function () {
+      $(".accordion").accordion({
+        heightStyle: "fill"
+      });
+
+
+      window.openPrintDialog = function(){
+        var dialog = $(".print-dialog").dialog({
+          width: "483px",
+          buttons:{
+            "Drucken":   function () {
+              window.print();
+            },
+            "Abbrechen": function () {
+              dialog.dialog( "close" );
+            }
+          }
+        });
+        var view = dialog.closest(".ui-dialog");
+        var footer = view.find('.ui-dialog-buttonset');
+        var closeButton = view.find('.ui-dialog-titlebar-close');
+
+        view.addClass("modal-content");
+        view.find('.ui-dialog-titlebar').addClass("modal-header");
+        view.find('.ui-dialog-title').addClass("modal-title");
+        footer.addClass("modal-footer");
+        footer.find('button').addClass('btn').addClass('btn-dialog');
+        closeButton.addClass("close");
+        closeButton.html($('<span aria-hidden="true">&times;</span><span class="sr-only">Close</span>'));
+      }
+
+
+      openPrintDialog();
+
+
+      $(window).on('resize', function () {
+        $(".accordion").accordion("refresh");
+      });
+    })
+  </script>
+{% endblock %}
+
 {% block top %}
-  top
-{% endblock  %}
+  <div style="float: left">
+    <ul class="navigation">
+      <li style="margin-right: 5px; margin-left: 2px"><a class="btn btn-icon fa-print" href="#" onclick="openPrintDialog()" >Print</a></li>
+      <li><a class="btn btn-icon fa-info-circle" href="#"></a></li>
+      <li style="margin-right: 5px"><a class="btn btn-icon fa-upload" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-ruler4" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-compass56" href="#"></a></li>
+      <li><a class="btn btn-icon fa-list-ul" href="#"></a></li>
+    </ul>
+    <ul class="navigation map-tools">
+      <li><a class="btn btn-icon flaticon-square23" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-selection7" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-constellation" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-selected3" href="#"></a></li>
+      <li><a class="btn btn-icon flaticon-db2" href="#"></a></li>
+    </ul>
+  </div>
+
+  <div style="float: right; margin-top: 2px; margin-right: 2px">
+    <select name="zoom" class="form-control" style="font-size: 19px; line-height: 19px; font-weight: bold; background-color: #f6f7e9; width: 157px;  font-family: 'Source Sans Pro', Arial; padding-top: 3px">
+      <option value="3000000" >3.000.000</option>
+      <option value="300000">300.000</option>
+      <option value="30000">30.000</option>
+    </select>
+  </div>
+
+{% endblock %}
 
 {% block left %}
-  left
-{% endblock  %}
+  <ul class="accordion">
+    <li>
+      <a href="#" class="btn flaticon-map81">Auswahl Tools</a>
+      <div class="content">
+        <img src="{{ asset("bundles/mapbendercore/regional/tabNavigator.png") }}">
+      </div>
+    </li>
+    <li>
+      <a href="#" class="btn flaticon-layers5">Kartenebenen</a>
+      <div class="content">
+        <img src="{{ asset("bundles/mapbendercore/regional/layerTree.png") }}">
+      </div>
+    </li>
+    <li>
+      <a href="#" class="btn flaticon-magnifier13">Suche</a>
+      <div class="content">
+        <form class="form-horizontal" role="form" style="margin-left: 4px; margin-right: 4px">
+          <input type="text" class="form-control" placeholder="Suche" style="margin-top: 2px">
+        </form>
+      </div>
+    </li>
+  </ul>
+{% endblock %}
 
+{% block center %}
+  <ul class="nav navbar-nav">
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
+      <ul class="dropdown-menu" role="menu">
+        <li><a href="#">Gesamtfläche</a></li>
+        <li><a href="#">Teilfläche</a></li>
+        <li><a href="#">Gitter</a></li>
+        <li class="divider"></li>
+        <li><a href="#">Blattschnitt</a></li>
+        <li class="divider"></li>
+        <li><a href="#">Freie Auswahl</a></li>
+      </ul>
+    </li>
+  </ul>
+{% endblock %}
 
-{% block right %}
-  right
-{% endblock  %}
-
-{% block center%}
-  center
-{% endblock  %}
-
-{% block bottom%}
-  bottom
-{% endblock  %}
+{% block htmlFooter %}
+    <div class="print-dialog" title="Druck Einstellungen" style="display: none">
+      <img src="{{ asset("bundles/mapbendercore/regional/printDialog.png") }}" width="481" style="width: 481px">
+    </div><!-- /.modal-content -->
+{% endblock %}
