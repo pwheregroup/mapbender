@@ -38,8 +38,7 @@ class Regional extends Template
      */
     static public function listAssets()
     {
-        $assets = array('css'   => array('@MapbenderCoreBundle/Resources/public/sass/theme/mapbender3.scss',
-                                         '@MapbenderCoreBundle/Resources/public/sass/template/responsive.scss'),
+        $assets = array('css'   => array(),
                         'js'    => array('@FOMCoreBundle/Resources/public/js/widgets/popup.js',
                                          '@MapbenderCoreBundle/Resources/public/js/responsive.js'),
                         'trans' => array());
@@ -59,7 +58,7 @@ class Regional extends Template
      */
     public static function getRegions()
     {
-        return array('top', 'left', 'center', 'right', 'bottom');
+        return array('top', 'left-side', 'center', 'right-side', 'bottom');
     }
 
     /**

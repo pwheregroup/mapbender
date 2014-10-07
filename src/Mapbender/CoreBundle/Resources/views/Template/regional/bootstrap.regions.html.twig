@@ -1,125 +1,69 @@
 {% extends 'MapbenderCoreBundle:Template/regional:bootstrap.base.html.twig' %}
-
-{% block body %}
-    <table class="regions">
-        <tbody>
-
-        {% if block('top') is not empty %}
-            <tr>
-                <td class="region top" colspan="3"><div class="content">{% block top %}{% endblock %}</div></td>
-            </tr>
-        {% endif %}
-
-        <tr>
-            {% if block('left') is not empty %}
-                <td class="region left" style="position: relative"><div class="content">{% block left %}{% endblock %}</div>
-                    {#<a href="#" onclick="regions.left.toggle()" class="btn btn-icon fa-angle-double-left btn-toggle right-region-toggle"></a>#}
-                </td>
-            {% endif %}
-
-            {% if block('center') is not empty %}
-                <td class="region center"><div class="content">{% block center %}{% endblock %}</div></td>
-            {% endif %}
-
-            {% if block('right') is not empty %}
-                <td class="region right"><div class="content">{% block right %}{% endblock %}</div></td>
-            {% endif %}
-        </tr>
-
-        {% if block('bottom') is not empty %}
-            <tr>
-                <td class="region bottom" colspan="3"><div class="content">{% block bottom %}{% endblock %}</div></td>
-            </tr>
-        {% endif %}
-
-        </tbody>
-    </table>
+{% block head %}
+    {# The jLayout JavaScript library provides layout algorithms for laying out components. A component is an abstraction; it can be implemented in many ways, for example as items in a HTML5 Canvas drawing or as HTML elements. The jLayout library allows you to focus on drawing the individual components instead of on how to arrange them on your screen.. #}
+    <script src="{{ asset('bundles/mapbendercore/regional/vendor/jquery/jquery.sizes.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('bundles/mapbendercore/regional/vendor/jquery/jlayout.border.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('bundles/mapbendercore/regional/vendor/jquery/jquery.jlayout.js') }}" type="text/javascript"></script>
     <script type="text/javascript">
-        $(function () {
-            var $regions = $(".regions");
-            var regions = {};
-            var isIE = $('html').is('.ie6, .ie7, .ie8, .ie9');
-            var i =1;
-            $.each(['top','bottom','left','center','right'],function(i,name){
-                var region = $regions.find("td." + name + "");
-                region.data('name', name);
-                region.data('height', region.height());
-                region.data('width', region.width());
+        jQuery(function($) {
+            var layoutContainer = $('body > .regions');
 
-//                region.find(' > .content').css('background-color','#'+(i*20)+''+(i*20)+''+(i*20)+'' )
-                i++;
+            window.updateLayout = function(e) {
+                layoutContainer.layout({resize: false});
+                if(!e || e.currentTarget != window){
+                    $(window).trigger('resize');
+                }
 
-                region.bind('close', function (e) {
-                    var td = $(e.currentTarget);
-                    var content = td.find(' > .content');
-                    var tr = td.parent();
-                    var name = td.data('name');
-
-                    td.data('closed',true);
-                    content.css('overflow', 'none');
-
-                    switch (name) {
-                        case 'bottom':
-                        case 'top':
-                            td.animate({'height': 1}, 400, function () {
-                                tr.css('display', 'none');
-                            });
-                            break;
-
-                        case 'left':
-                        case 'right':
-                            td.animate({'width': 1}, 400, function () {
-                                td.css('display', 'none');
-                            });
-                            break;
-                    }
-                }).bind('open', function (e) {
-                    var td = $(e.currentTarget);
-                    var content = td.find(' > .content');
-                    var tr = td.parent();
-                    var name = td.data('name');
-
-                    td.data('closed', false);
-                    content.css('overflow', 'none');
-
-                    switch (name) {
-                        case 'bottom':
-                        case 'top':
-                            tr.css('display', '');
-                            td.animate({'height': td.data('height') + 'px'}, 400, function () {
-                                content.css('overflow', 'auto');
-                            });
-                            break;
-
-                        case 'left':
-                        case 'right':
-                            td.css('display', '');
-                            td.animate({'width': td.data('width') + 'px'}, 400, function () {
-                                content.css('overflow', 'auto');
-                            });
-                            break;
-                    }
-                }).bind('toggle', function (e) {
-                    var td = $(e.currentTarget);
-                    td.data('closed') ? td.trigger('open') : td.trigger('close');
-                });
-
-                regions[name] = region;
-            });
-            window.regions = regions;
-
-            function calculate() {
-                var h = $(window).height() - (regions.top.find('> .content').height() + regions.bottom.find('> .content').height());
-                $.each(['left', 'center', 'right'], function (k, name) {
-                    var region = regions[name];
-                    regions[name].height(h);
-                })
             }
 
-            var $window = $(window);
-            $window.on('resize', calculate);
-            calculate();
-        })
+            window.regionUpdateDeclaration = {
+                duration: 500,
+                complete: updateLayout,
+                step:     updateLayout
+            };
+
+            $(window).resize(updateLayout);
+            updateLayout();
+        });
     </script>
+{% endblock %}
+{% block body %}
+    <div data-layout='{"type": "border", "hgap": 0, "vgap": 0}' class="regions">
+        <div class="center">
+            {% block center %}
+                <div>
+                    <button id="toggle-north" onclick="$('.north').animate({height: 'toggle'}, regionUpdateDeclaration)">North</button>
+                    <button id="toggle-west" onclick="$('.west').animate({width: 'toggle'}, regionUpdateDeclaration)"> West</button>
+                    <button id="toggle-south" onclick="$('.south').animate({height: 'toggle'}, regionUpdateDeclaration)"> South</button>
+                    <button id="toggle-east" onclick="$('.east').animate({width: 'toggle'}, regionUpdateDeclaration)"> East</button>
+                </div>
+            {% endblock %}
+        </div>
+
+        {% if block('right') is not empty %}
+            <div class="east">
+                {% block right %}{% endblock %}
+            </div>
+        {% endif %}
+
+        {% if block('left') is not empty %}
+            <div class="west">
+                {% block left %}{% endblock %}
+            </div>
+        {% endif %}
+
+        {% if block('top') is not empty %}
+            <div class="north">
+                {% block top %}{% endblock %}
+            </div>
+        {% endif %}
+
+        {% if block('bottom') is not empty %}
+            <div class="south">
+                {% block bottom %}{% endblock %}
+            </div>
+        {% endif %}
+    </div>
+
     {% block htmlFooter %}{% endblock %}
 {% endblock %}
