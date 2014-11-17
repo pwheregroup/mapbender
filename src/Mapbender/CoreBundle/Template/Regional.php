@@ -50,7 +50,8 @@ class Regional extends Template
      */
     public function getAssets($type)
     {
-        return $this::listAssets()[$type];
+        $arr = self::listAssets();
+        return $arr[$type];
     }
 
     /**
