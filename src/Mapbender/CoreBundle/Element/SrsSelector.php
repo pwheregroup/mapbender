@@ -5,9 +5,9 @@ use Mapbender\CoreBundle\Component\Element;
 
 /**
  * Spatial reference system selector
- * 
+ *
  * Changes the map spatial reference system
- * 
+ *
  * @author Paul Schmidt
  */
 class SrsSelector extends Element
@@ -50,7 +50,7 @@ class SrsSelector extends Element
     /**
      * @inheritdoc
      */
-    static public function listAssets()
+    public static function listAssets()
     {
         return array(
             'js' => array(
@@ -85,12 +85,14 @@ class SrsSelector extends Element
      */
     public function render()
     {
-        return $this->container->get('templating')
-                ->render('MapbenderCoreBundle:Element:srsselector.html.twig',
-                    array(
-                    'id' => $this->getId(),
-                    "title" => $this->getTitle(),
-                    'configuration' => $this->getConfiguration()));
+        return $this->container->get('templating')->render(
+            'MapbenderCoreBundle:Element:srsselector.html.twig',
+            array(
+                'id' => $this->getId(),
+                "title" => $this->getTitle(),
+                'configuration' => $this->getConfiguration()
+            )
+        );
     }
 
     /**
@@ -100,5 +102,4 @@ class SrsSelector extends Element
     {
         return 'MapbenderManagerBundle:Element:srsselector.html.twig';
     }
-
 }
