@@ -1,0 +1,22 @@
+{
+    "name": "mapbender/mapbender",
+    "description": "Mapbender",
+    "keywords": ["mapbender", "module"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {"name": "Andreas Schmitz""},
+        {"name": "Andriy Oblivantsev"},
+        {"name": "Paul Schmidt"},
+        {"name": "Stefan Winkelmann"}
+    ],
+    "require": {
+        "php": ">=5.3.3",
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "autoload": {
+        "psr-4": {"Mapbender\\": "src/Mapbender"}
+    }
+}
