@@ -5,7 +5,7 @@
     "type": "library",
     "license": "MIT",
     "authors": [
-        {"name": "Andreas Schmitz""},
+        {"name": "Andreas Schmitz"},
         {"name": "Andriy Oblivantsev"},
         {"name": "Paul Schmidt"},
         {"name": "Stefan Winkelmann"}
