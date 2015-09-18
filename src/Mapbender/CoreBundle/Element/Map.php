@@ -83,7 +83,7 @@ class Map extends Element
 //                '/components/jquery-tmpl/jquery.tmpl.min.js',
                 '/components/mapquery/lib/jquery/jquery.tmpl.js',
                 '/components/mapquery/src/jquery.mapquery.core.js',
-                'proj4js/proj4js-compressed.js',
+                '/components/proj4js/lib/proj4js-compressed.js',
                 'mapbender.element.map.js'),
             'css' => array('@MapbenderCoreBundle/Resources/public/sass/element/map.scss'));
     }
