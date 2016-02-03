@@ -409,6 +409,43 @@
             var $context = this._getContext();
             var w = window.open("", "title", "attributes,scrollbars=yes,menubar=yes");
             var el = $('.js-content-content.active,.active .js-content-content', $context);
+            function findIframes(elm){
+                $('iframe', elm).each(function(idx, item){
+                    var idx = new Date().getTime().toString() + idx;
+                    $(this).attr('data-tempidx', idx);
+                    var $body = $($(this).contents().find("body"));
+                    findIframes($body);
+                });
+            }
+            findIframes(el);
+            w.document.write(el.html());
+            function addIframeContent(orig, doc){
+//                var toreplace = {};
+                $('iframe', orig).each(function(idx, item){
+                    var $this = $(this);
+                    var contentHtml = $this.get(0).contentWindow.document.documentElement.innerHTML;
+                    //
+                    var docIframe = $('[data-tempidx="'+$this.attr('data-tempidx')+'"', doc);
+                    if(docIframe.length){
+                        var doc_ = docIframe.get(0).contentWindow.document;
+                        doc_.open();
+                        doc_.write(contentHtml);
+                        doc_.close();
+                    }
+                    // copy styles
+                    var elFrom = $this.get(0);
+                    var computedStyle = document.defaultView.getComputedStyle(elFrom,null);
+                    $.each(computedStyle,function(key,value) {
+                        docIframe.css(value,$(elFrom).css(value));
+                    });
+                });
+            }
+            addIframeContent(el, w.document);
+        },
+        _printContent_: function() {
+            var $context = this._getContext();
+            var w = window.open("", "title", "attributes,scrollbars=yes,menubar=yes");
+            var el = $('.js-content-content.active,.active .js-content-content', $context);
             var printContent = "";
             if ($('> iframe', el).length === 1) {
                 var a = document.getElementById($('iframe', el).attr('id'));
@@ -417,7 +454,7 @@
                 printContent = el.html();
             }
             w.document.write(printContent);
-            w.print();
+            //w.print();
         },
         
         /**
