@@ -441,6 +441,7 @@
                 });
             }
             addIframeContent(el, w.document);
+            w.print();
         },
         _printContent_: function() {
             var $context = this._getContext();
