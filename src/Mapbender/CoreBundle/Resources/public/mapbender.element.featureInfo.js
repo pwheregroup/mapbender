@@ -441,9 +441,37 @@
                 });
             }
             addIframeContent(el, w.document);
-            window.setTimeout(w.print(), 100);
+            window.setTimeout(function() {w.print();}, 100);
         },
         _printContent: function() {
+            var $context = this._getContext();
+            var el = $('.js-content-content.active,.active .js-content-content', $context);
+//            var resize = {};
+//            function findIframes(elm){
+//                $('iframe', elm).each(function(idx, item){
+//                    var $item = $(item);
+//                    if(!$item.attr('id')) {
+//                        $item.attr('id', Mapbender.Util.UUID());
+//                    }
+//                    
+//                        var ifr = document.getElementById($(item).attr('id'));
+//                    var contentHtml = $item.get(0).contentWindow.document.documentElement.innerHTML;
+//                    resize[$item.attr('id')] = {width: $body.outerWidth(), height: $body.outerHeight()};
+//                    var idx = new Date().getTime().toString() + idx;
+//                    $(this).attr('data-tempidx', idx);
+//                    resize[idx] = {width: $body.outerWidth(), height: $body.outerHeight()};
+//                    /** TODO make recursive?
+//                    var $body = $($(this).contents().find("body"));
+//                    findIframes($body);
+//                    */
+//                });
+//            }
+//            findIframes(el);
+//            var iframe_css = "";
+//            for(var key in resize){
+//                iframe_css += '\n#'+key+'{width:'+resize[key].width+'px;height:'+resize[key].height+'px;}';
+//            }
+//            console.log(iframe_css);
             $('body').addClass('print-featureinfo');
             var dialog = this.element.parents('.popupContainer:first');
             dialog.addClass('print-featureinfo');

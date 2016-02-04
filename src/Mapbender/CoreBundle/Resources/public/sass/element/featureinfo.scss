@@ -69,12 +69,13 @@
 }
 
 @media print {
-    body.print-featureinfo .templateWrapper {
-        display: none;
+    body.print-featureinfo #templateWrapper {
+        display: none !important;
     }
     body.print-featureinfo .popupContainer.print-featureinfo {
         display: block;
         height: auto;
+        border-width: 0px !important;
     }
     body.print-featureinfo .popupContainer.print-featureinfo .popupHead,
     body.print-featureinfo .popupContainer.print-featureinfo .popupButtons,
@@ -84,17 +85,33 @@
     body.print-featureinfo .popupContainer.print-featureinfo .popup {
         margin: 0px;
         padding: 0px;
+        height: auto !important;
+        /*width: auto !important;*/
+        border-width: 0px !important;
     }
-    body.print-featureinfo .popupContainer.print-featureinfo .popupScroll,
-    body.print-featureinfo .popupContainer.print-featureinfo .popupContent{
-        position:absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
+    body.print-featureinfo .popupContainer.print-featureinfo .popup .popupScroll {
+        position: relative !important;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
         margin: 0px;
         padding: 0px;
-        overflow: visible;
+        overflow: visible !important;
+        height: auto !important;
+        /*width: auto !important;*/
+        border-width: 10px solid red !important;
+    }
+    body.print-featureinfo .popupContainer.print-featureinfo .popup .popupScroll .popupContent .container.active {
+        height: auto;
+        overflow: visible !important;
+        margin: 0px;
+        padding: 0px;
+        border-width: 0px;
+        height: auto !important;
     }
     
+    body.print-featureinfo .popupContainer.print-featureinfo .popup .ui-resizable-handle {
+        display: none !important;
+    }
 }
