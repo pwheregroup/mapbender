@@ -441,21 +441,13 @@
                 });
             }
             addIframeContent(el, w.document);
-            w.print();
+            window.setTimeout(w.print(), 100);
         },
         _printContent_: function() {
-            var $context = this._getContext();
-            var w = window.open("", "title", "attributes,scrollbars=yes,menubar=yes");
-            var el = $('.js-content-content.active,.active .js-content-content', $context);
-            var printContent = "";
-            if ($('> iframe', el).length === 1) {
-                var a = document.getElementById($('iframe', el).attr('id'));
-                printContent = a.contentWindow.document.documentElement.innerHTML;
-            } else {
-                printContent = el.html();
-            }
-            w.document.write(printContent);
-            //w.print();
+            $('body').addClass('print-featureinfo');
+            var dialog = this.element.parents('.popupContainer:first');
+            dialog.addClass('print-featureinfo');
+            window.print();
         },
         
         /**
