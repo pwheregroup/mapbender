@@ -405,7 +405,7 @@
 
             }
         },
-        _printContent: function() {
+        _printContent_: function() {
             var $context = this._getContext();
             var w = window.open("", "title", "attributes,scrollbars=yes,menubar=yes");
             var el = $('.js-content-content.active,.active .js-content-content', $context);
@@ -443,7 +443,7 @@
             addIframeContent(el, w.document);
             window.setTimeout(w.print(), 100);
         },
-        _printContent_: function() {
+        _printContent: function() {
             $('body').addClass('print-featureinfo');
             var dialog = this.element.parents('.popupContainer:first');
             dialog.addClass('print-featureinfo');
