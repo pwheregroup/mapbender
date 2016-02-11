@@ -2,12 +2,14 @@
 
 namespace Mapbender\CoreBundle\Element;
 
-use Mapbender\CoreBundle\Component\Element;
-use Mapbender\ManagerBundle\Component\Mapper;
-use Mapbender\PrintBundle\Component\OdgParser;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use FOM\UserBundle\Entity\User;
+use Mapbender\CoreBundle\Component\Element;
 use Mapbender\PrintBundle\Component\PrintService;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Mapbender\PrintBundle\Controller\PrintController;
+use Mapbender\PrintBundle\Component\OdgParser;
+use Mapbender\PrintBundle\Element\Token\SignerToken;
 
 /**
  *
@@ -52,11 +54,12 @@ class PrintClient extends Element
      */
     public static function listAssets()
     {
-        return array('js' => array('mapbender.element.printClient.js',
-                '@FOMCoreBundle/Resources/public/js/widgets/popup.js',
-                '@FOMCoreBundle/Resources/public/js/widgets/dropdown.js'),
-            'css' => array('@MapbenderCoreBundle/Resources/public/sass/element/printclient.scss'),
-            'trans' => array('MapbenderCoreBundle:Element:printclient.json.twig'));
+        return array('js'    => array('vendor/jquery.dataTables.min.js',
+                                      'mapbender.element.printClient.js',
+                                      '@FOMCoreBundle/Resources/public/js/widgets/popup.js',
+                                      '@FOMCoreBundle/Resources/public/js/widgets/dropdown.js'),
+                     'css'   => array('@MapbenderCoreBundle/Resources/public/sass/element/printclient.scss'),
+                     'trans' => array('MapbenderCoreBundle:Element:printclient.json.twig'));
     }
 
     /**
@@ -94,6 +97,7 @@ class PrintClient extends Element
             "quality_levels" => array(array('dpi' => "72", 'label' => "Draft (72dpi)"),
                 array('dpi' => "288", 'label' => "Document (288dpi)")),
             "rotatable" => true,
+	    "renderingMode" => "direct",
             "legend" => true,
             "legend_default_behaviour" => true,
             "optional_fields" => array(
@@ -128,6 +132,11 @@ class PrintClient extends Element
         if (!isset($config["type"])) {
             $config["type"] = "dialog";
         }
+
+        $user                       = $this->container->get('mapbender.print.queue_manager')->getCurrentUser();
+        $config["displayAllQueues"] = $user ? $user->isAdmin() : false;
+        $config["anonymous"]        = !$user;
+
         return $config;
     }
 
@@ -178,39 +187,8 @@ class PrintClient extends Element
         $request = $this->container->get('request');
         $configuration = $this->getConfiguration();
         switch ($action) {
-            case 'print':
-
-                $data = $request->request->all();
-
-                foreach ($data['layers'] as $idx => $layer) {
-                    $data['layers'][$idx] = json_decode($layer, true);
-                }
-
-                if (isset($data['overview'])) {
-                    foreach ($data['overview'] as $idx => $layer) {
-                        $data['overview'][$idx] = json_decode($layer, true);
-                    }
-                }
-
-                if (isset($data['features'])) {
-                    foreach ($data['features'] as $idx => $value) {
-                        $data['features'][$idx] = json_decode($value, true);
-                    }
-                }
-
-                if (isset($configuration['replace_pattern'])) {
-                    foreach ($configuration['replace_pattern'] as $idx => $value) {
-                        $data['replace_pattern'][$idx] = $value;
-                    }
-                }
-
-                if (isset($data['extent_feature'])) {
-                    $data['extent_feature'] = json_decode($data['extent_feature'], true);
-                }
-
-                if (isset($data['legends'])) {
-                    $data['legends'] = json_decode($data['legends'], true);
-                }
+            case 'direct':
+                $data = $this->preparePrintData($request);
 
                 $printservice = new PrintService($this->container);
 
@@ -225,6 +203,22 @@ class PrintClient extends Element
                 ));
 
                 return $response;
+                
+            case 'queued':
+                $data = $this->preparePrintData($request);
+                $user = $this->container->get('mapbender.print.queue_manager')->getCurrentUser();
+                $data['renderMode'] = $configuration['renderMode'];
+                $data['userId'] = $user ? $user->getId() : null;
+                $data['anonymous'] = $configuration['anonymous'];
+                
+                $content = $this->container->get('signer')->dump(new SignerToken($data));
+                $duplicate = $request->duplicate(array(), null, array('content' => $content));
+                $duplicate->initialize(array(), array(), array(), array(), array(), array(), $content);
+                $printController = new PrintController();
+                $this->container->set('request', $duplicate);
+                $printController->setContainer($this->container);
+                $res = $printController->serviceAction();
+                return $res;
 
             case 'getTemplateSize':
                 $template = $request->get('template');
@@ -233,5 +227,66 @@ class PrintClient extends Element
 
                 return new Response($size);
         }
+        
+        $data = array('userId'  => $this->getCurrentUserId(),
+                      'element' => $configuration,
+                      'request' => $request->request->all());
+        $content = $this->container->get('signer')->dump(new SignerToken($data));
+        $duplicate = $request->duplicate(array(), null, array('content' => $content));
+        $duplicate->initialize(array(), array(), array(), array(), array(), array(), $content);
+        $printController = new PrintController();
+        $this->container->set('request', $duplicate);
+        $printController->setContainer($this->container);
+        
+        switch ($action) {
+            case 'queuelist':
+                return $printController->queueListAction();
+            case 'remove':
+                return $printController->removeAction();
+        }
     }
+
+    private function preparePrintData($request){
+        $data = $request->request->all();
+
+        foreach ($data['layers'] as $idx => $layer) {
+            $data['layers'][$idx] = json_decode($layer, true);
+        }
+
+        if (isset($data['overview'])) {
+            foreach ($data['overview'] as $idx => $layer) {
+                $data['overview'][$idx] = json_decode($layer, true);
+            }
+        }
+
+        if (isset($data['features'])) {
+            foreach ($data['features'] as $idx => $value) {
+                $data['features'][$idx] = json_decode($value, true);
+            }
+        }
+
+        if (isset($configuration['replace_pattern'])) {
+            foreach ($configuration['replace_pattern'] as $idx => $value) {
+                $data['replace_pattern'][$idx] = $value;
+            }
+        }
+
+        if (isset($data['extent_feature'])) {
+            $data['extent_feature'] = json_decode($data['extent_feature'], true);
+        }
+
+        if (isset($data['legends'])) {
+            $data['legends'] = json_decode($data['legends'], true);
+        }
+        
+        return $data;
+    }
+    
+    public function getCurrentUserId()
+    {
+        $token = $this->container->get('security.context')->getToken();
+        $user  = $token ? $token->getUser() : null;
+        return $user && $user instanceof User ? $user->getId() : null;
+    }
+
 }

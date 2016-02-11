@@ -39,13 +39,19 @@ class PrintService
         // resource dir
         $this->resourceDir = $this->container->getParameter('kernel.root_dir') . '/Resources/MapbenderPrintBundle';
         
-        // get user
-        $securityContext = $this->container->get('security.context');
-        $token = $securityContext->getToken();
-        $this->user = $token->getUser();
-        
         // data from client
         $this->data = $data;
+        
+        // get user
+        if (!isset($data['renderMode'])) {
+            $securityContext = $this->container->get('security.context');
+            $token = $securityContext->getToken();
+            $this->user = $token->getUser();
+        }else{
+            $this->user = $this->container->get('doctrine')
+            ->getRepository('FOMUserBundle:User')
+            ->findOneBy(array('id' => $data['userId']));
+        }
 
         // template configuration from odg
         $odgParser = new OdgParser($this->container);
