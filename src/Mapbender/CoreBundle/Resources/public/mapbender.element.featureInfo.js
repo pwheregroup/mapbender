@@ -429,10 +429,12 @@
             if(iframe_css) {
                 $('body').append('<style type="text/css" id="'+(new Date().getTime().toString())+'">@media print {' + iframe_css + '}</style>');
             }
-            $('body').addClass('print-featureinfo');
-            var dialog = this.element.parents('.popupContainer:first');
-            dialog.addClass('print-featureinfo');
-            window.print();
+             window.setTimeout(function() {//
+                $('body').addClass('print-featureinfo');
+                var dialog = this.element.parents('.popupContainer:first');
+                dialog.addClass('print-featureinfo');
+                window.print();
+            }, 300);
         },
         
         /**
