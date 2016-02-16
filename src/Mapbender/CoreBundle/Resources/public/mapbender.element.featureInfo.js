@@ -405,56 +405,18 @@
 
             }
         },
-        _printContent_: function() {
-            var $context = this._getContext();
-            var w = window.open("", "title", "attributes,scrollbars=yes,menubar=yes");
-            var el = $('.js-content-content.active,.active .js-content-content', $context);
-            function findIframes(elm){
-                $('iframe', elm).each(function(idx, item){
-                    var idx = new Date().getTime().toString() + idx;
-                    $(this).attr('data-tempidx', idx);
-                    var $body = $($(this).contents().find("body"));
-                    findIframes($body);
-                });
-            }
-            findIframes(el);
-            w.document.write(el.html());
-            function addIframeContent(orig, doc){
-//                var toreplace = {};
-                $('iframe', orig).each(function(idx, item){
-                    var $this = $(this);
-                    var contentHtml = $this.get(0).contentWindow.document.documentElement.innerHTML;
-                    //
-                    var docIframe = $('[data-tempidx="'+$this.attr('data-tempidx')+'"', doc);
-                    if(docIframe.length){
-                        var doc_ = docIframe.get(0).contentWindow.document;
-                        doc_.open();
-                        doc_.write(contentHtml);
-                        doc_.close();
-                    }
-                    // copy styles
-                    var elFrom = $this.get(0);
-                    var computedStyle = document.defaultView.getComputedStyle(elFrom,null);
-                    $.each(computedStyle,function(key,value) {
-                        docIframe.css(value,$(elFrom).css(value));
-                    });
-                });
-            }
-            addIframeContent(el, w.document);
-            window.setTimeout(function() {w.print();}, 100);
-        },
         _printContent: function() {
             var $context = this._getContext();
             var el = $('.js-content-content.active,.active .js-content-content', $context);
-//            var doc = $('iframe', el).get(0).contentWindow.document;
-//            doc.defaultView.innerHeight
             var resize = {};
-            function findIframes(elm){
-                $('iframe', elm).each(function(idx, item){
+            function findIframes(context){
+                $('iframe', context).each(function(idx, item){
                     var $item = $(item);
+                    if(!$item.attr('id')) {
+                        $item.attr('id', Mapbender.Util.UUID());
+                    }
                     var ifdoc = $item.get(0).contentWindow.document;
-                    var idx_ = 'iframe_' + new Date().getTime().toString() + idx;
-                    $(this).attr('data-tempidx', idx_);
+                    var idx_ = $item.attr('id');
                     resize[idx_] = {width: ifdoc.defaultView.innerWidth, height: ifdoc.defaultView.innerHeight};
                     /** TODO make recursive? */
                 });
@@ -462,12 +424,11 @@
             findIframes(el);
             var iframe_css = "";
             for(var key in resize){
-                iframe_css += '\n#'+key+'{width:'+resize[key].width+'px;height:'+resize[key].height+'px;}';
+                iframe_css += '\n#'+key+'{width:'+resize[key].width+'px !important;height:'+resize[key].height+'px !important;}';
             }
             if(iframe_css) {
-                document.write('<style type="text/css" id="'+(new Date().getTime().toString())+'">' + iframe_css + '</style>');
+                $('body').append('<style type="text/css" id="'+(new Date().getTime().toString())+'">@media print {' + iframe_css + '}</style>');
             }
-//            console.log(iframe_css);
             $('body').addClass('print-featureinfo');
             var dialog = this.element.parents('.popupContainer:first');
             dialog.addClass('print-featureinfo');
