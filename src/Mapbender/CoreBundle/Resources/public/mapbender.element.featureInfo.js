@@ -446,31 +446,27 @@
         _printContent: function() {
             var $context = this._getContext();
             var el = $('.js-content-content.active,.active .js-content-content', $context);
-//            var resize = {};
-//            function findIframes(elm){
-//                $('iframe', elm).each(function(idx, item){
-//                    var $item = $(item);
-//                    if(!$item.attr('id')) {
-//                        $item.attr('id', Mapbender.Util.UUID());
-//                    }
-//                    
-//                        var ifr = document.getElementById($(item).attr('id'));
-//                    var contentHtml = $item.get(0).contentWindow.document.documentElement.innerHTML;
-//                    resize[$item.attr('id')] = {width: $body.outerWidth(), height: $body.outerHeight()};
-//                    var idx = new Date().getTime().toString() + idx;
-//                    $(this).attr('data-tempidx', idx);
-//                    resize[idx] = {width: $body.outerWidth(), height: $body.outerHeight()};
-//                    /** TODO make recursive?
-//                    var $body = $($(this).contents().find("body"));
-//                    findIframes($body);
-//                    */
-//                });
-//            }
-//            findIframes(el);
-//            var iframe_css = "";
-//            for(var key in resize){
-//                iframe_css += '\n#'+key+'{width:'+resize[key].width+'px;height:'+resize[key].height+'px;}';
-//            }
+//            var doc = $('iframe', el).get(0).contentWindow.document;
+//            doc.defaultView.innerHeight
+            var resize = {};
+            function findIframes(elm){
+                $('iframe', elm).each(function(idx, item){
+                    var $item = $(item);
+                    var ifdoc = $item.get(0).contentWindow.document;
+                    var idx_ = 'iframe_' + new Date().getTime().toString() + idx;
+                    $(this).attr('data-tempidx', idx_);
+                    resize[idx_] = {width: ifdoc.defaultView.innerWidth, height: ifdoc.defaultView.innerHeight};
+                    /** TODO make recursive? */
+                });
+            }
+            findIframes(el);
+            var iframe_css = "";
+            for(var key in resize){
+                iframe_css += '\n#'+key+'{width:'+resize[key].width+'px;height:'+resize[key].height+'px;}';
+            }
+            if(iframe_css) {
+                document.write('<style type="text/css" id="'+(new Date().getTime().toString())+'">' + iframe_css + '</style>');
+            }
 //            console.log(iframe_css);
             $('body').addClass('print-featureinfo');
             var dialog = this.element.parents('.popupContainer:first');
