@@ -406,6 +406,7 @@
             }
         },
         _printContent: function() {
+            var self = this;
             var $context = this._getContext();
             var el = $('.js-content-content.active,.active .js-content-content', $context);
             var resize = {};
@@ -431,7 +432,7 @@
             }
              window.setTimeout(function() {//
                 $('body').addClass('print-featureinfo');
-                var dialog = this.element.parents('.popupContainer:first');
+                var dialog = self.element.parents('.popupContainer:first');
                 dialog.addClass('print-featureinfo');
                 window.print();
             }, 300);
