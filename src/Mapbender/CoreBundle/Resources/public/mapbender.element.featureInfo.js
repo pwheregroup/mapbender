@@ -415,9 +415,9 @@
                     if(!$item.attr('id')) {
                         $item.attr('id', Mapbender.Util.UUID());
                     }
-                    var ifdoc = $item.get(0).contentWindow.document;
-                    var idx_ = $item.attr('id');
-                    resize[idx_] = {width: ifdoc.defaultView.outerWidth, height: ifdoc.defaultView.outerHeight};
+//                    var ifdoc = $item.get(0).contentWindow.document;
+//                    resize[$item.attr('id')] = {width: ifdoc.defaultView.outerWidth, height: ifdoc.defaultView.outerHeight};
+                    resize[$item.attr('id')] = {width: $item.contents().width(), height: $item.contents().height()};
                     /** TODO make recursive? */
                 });
             }
