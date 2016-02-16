@@ -417,7 +417,7 @@
                     }
                     var ifdoc = $item.get(0).contentWindow.document;
                     var idx_ = $item.attr('id');
-                    resize[idx_] = {width: ifdoc.defaultView.innerWidth, height: ifdoc.defaultView.innerHeight};
+                    resize[idx_] = {width: ifdoc.defaultView.outerWidth, height: ifdoc.defaultView.outerHeight};
                     /** TODO make recursive? */
                 });
             }
