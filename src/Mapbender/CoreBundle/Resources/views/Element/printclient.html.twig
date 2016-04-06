@@ -1,5 +1,7 @@
 <div id="{{ id }}" class="mb-element mb-element-printclient" title="{{ title |trans }}">
     
+    
+    {% if configuration.renderMode is defined and configuration.renderMode == 'queued' %}
     <div class="tab-container">
         <ul class="tabs">
             <li><a href="#tabs-1" class="settings">{{ 'mb.core.printclient.label.settings' | trans }}</a></li>
@@ -7,7 +9,8 @@
             <li><a href="#tabs-3" class="all-queues">{{ 'mb.core.printclient.label.global_queues' | trans }}</a></li>
         </ul>
     <div id="tabs-1" class="print-form">
-
+    {% endif %}
+        
         {%  if configuration['type'] is defined and configuration.type == 'element' %}
             <input type="button" class="button" id="printToggle" active="false" value="{{ 'mb.core.printclient.btn.activate' | trans }}"/>
             <br>    
@@ -84,6 +87,8 @@
             <input type="button" class="button printSubmit hidden" value="{{ 'mb.core.printclient.popup.btn.ok' | trans }}"/>
 
         </form>
+            
+    {% if configuration.renderMode is defined and configuration.renderMode == 'queued' %}        
     </div >
 
         <div id="tabs-2" class="own-queues">
@@ -114,4 +119,5 @@
         </div>
 
     </div>
+    {% endif %}
 </div>
