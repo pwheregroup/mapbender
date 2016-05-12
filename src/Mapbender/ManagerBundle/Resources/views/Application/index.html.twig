@@ -14,32 +14,35 @@
 {% block manager_content %}
 
 {% if applications | length > 0 %}
-  <label for="inputFilterApplications" class="labelInput left">{{"mb.manager.admin.filter.application"|trans}}:</label><input id="inputFilterApplications" type="text" class="input listFilterInput">
+  <label for="inputFilterApplications" class="labelInput left">{{"mb.manager.admin.filter.application"|trans}}:</label>
+    <input id="inputFilterApplications" type="text" class="input listFilterInput">
   {% include "MapbenderManagerBundle:Application:actions.html.twig" %}
 
   <ul id="listFilterApplications" class="listFilterContainer clear listFilterBoxes listFilterApplicationBoxes">
     {% for application in applications %}
-      <li class="filterItem">
+      <li class="filterItem" tabindex="0" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" onenter="function(){
+        debbugger;
+              } ">
           {% if application.screenshot is not null %}
-            <a target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}">
+            <span target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}">
                 <div class="col1">
                     <div class="cell">
                        <img src="{{ uploads_web_url }}/{{application.slug}}/{{application.screenshot}}?t={% if time != null %}{{ time | date('d.m.Y-H:i:s') }}{% endif %}"" alt="screenshot">                    </div>            
                 </div>
-            </a>
+            </span>
           {% else %}
-              <a target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}">
+              <span target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}">
                   <div class="col1 iconAppDefault"></div>
-              </a>
+              </span>
           {% endif %}
         <div class="col2 box">
-          <a href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" class="title" title="{{ 'mb.manager.admin.application.view_this' | trans }}">
+          <span href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" class="title" title="{{ 'mb.manager.admin.application.view_this' | trans }}">
             {{ application.title }}
-          </a>
+          </span>
           <span class="smallerText">{{ application.slug }}</span>
           <div class="description">{{ application.description }}</div>
           <div class="buttonGroup">
-            <a class="iconView iconBig" target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}"></a>
+            <span class="iconView iconBig" target="_blank" href="{{ path('mapbender_core_application_application', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.view' | trans }} {{ application.title }}"></span>
 
             {% if application.source is constant('Mapbender\\CoreBundle\\Entity\\Application::SOURCE_DB') and is_granted('EDIT', application) %}
               <a class="iconCopy iconBig" href="{{ path('mapbender_manager_application_copydirectly', {'slug': application.slug}) }}" title="{{ 'mb.manager.admin.application.duplicate'|trans }} {{ application.title }}"></a>

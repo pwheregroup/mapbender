@@ -1,8 +1,26 @@
 $(function(){
+
+    var applicationFilter = $("#inputFilterApplications");
+    var applicationList = $('#listFilterApplications');
+
+    applicationFilter.focus();
+
+    $("> li", applicationList).on("click keydown", function(event) {
+        var target = $(event.target);
+        if((event.type == "keydown" && event.keyCode != 13)
+           || (target.hasClass("iconBig") && !target.hasClass("iconView"))
+        ) {
+            return;
+        }
+
+        var url = $(".iconView",this).attr("href");
+        window.open(url, url);
+    });
+
     // Switch application state via Ajax when the current state icon is clicked
-    $('#listFilterApplications').find(".iconPublish").bind('click', function() {
+    applicationList.find(".iconPublish").bind('click', function() {
         var me             = $(this);
-        var url            = Routing.generate('mapbender_manager_application_togglestate', 
+        var url            = Routing.generate('mapbender_manager_application_togglestate',
                                               {slug: me.attr('data-application-slug')})
         var requestedState;
 
@@ -17,11 +35,12 @@ $(function(){
         var errorHandler = function() {
             me.removeClass(requestedState);
             me.addClass(me.hasClass("enabled") ? 'disabled' : 'enabled');
-            if(!$('body').data('mbPopup')) {
-                $("body").mbPopup();
-                $("body").mbPopup('showHint', {content:"Unfortunately, there was an error switching states."});
+            var body = $('body');
+            if(!body.data('mbPopup')) {
+                body.mbPopup();
+                body.mbPopup('showHint', {content:"Unfortunately, there was an error switching states."});
             }
-        }
+        };
 
         $.ajax({
             url: url,
@@ -41,9 +60,8 @@ $(function(){
     var popup;
 
     // Delete application via Ajax
-    $('#listFilterApplications').find(".iconRemove").bind("click", function(){
+    applicationList.find(".iconRemove").bind("click", function(){
         var self    = $(this);
-        var content = self.parent().siblings(".title").text();
         var content = $('<div/>').text(self.parent().siblings(".title").text()).html();
 
         if(popup){
