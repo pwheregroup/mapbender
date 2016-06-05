@@ -1,0 +1,29 @@
+{
+    "name": "mapbender/print",
+    "description": "Mapbender print element",
+    "keywords": ["mapbender", "print"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {"name": "Andriy Oblivantsev"},
+        {"name": "Stefan Winkelmann"}
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "mapbender/data-source": "*",
+        "setasign/fpdi-fpdf": "1.6.*"
+    },
+    "minimum-stability": "dev",
+    "config": {
+        "bin-dir": "bin"
+    },
+    "autoload": {
+        "psr-0": {"Mapbender\\PrintBundle": "."}
+    },
+    "target-dir": "Mapbender/PrintBundle",
+    "extra": {
+        "branch-alias": {
+            "dev-module/print": "1.0.x-dev"
+        }
+    }
+}
