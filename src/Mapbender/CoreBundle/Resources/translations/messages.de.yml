@@ -1,5 +1,10 @@
 mb:
   core:
+    logout:
+      element:
+        title: 'logout element'
+        label: 'Abmelden2'
+        confirm: 'Wirklich abmelden?'
     aboutdialog:
       content:
         versionprefix: Version
@@ -382,3 +387,4 @@ mb:
       datails: 'Die Karte kann nicht angezeigt werden.'
       exception: 'Ausnahmefehler: %exception%'
       statuscode: 'HTTP Statuscode'
+      

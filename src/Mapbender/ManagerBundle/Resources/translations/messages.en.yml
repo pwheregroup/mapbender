@@ -99,7 +99,8 @@ mb:
       template: Template
       application:
         view: View
-        edit: 'Edit application'
+        edit: 
+          base_data: 'Edit application'
         layouts: Layouts
         layersets: Layersets
         custom_css: CSS

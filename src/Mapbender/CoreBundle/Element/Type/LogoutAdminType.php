@@ -33,7 +33,8 @@ class LogoutAdminType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('label', 'text', array('required' => false))
+            ->add('title', 'text', array('required' => false))
+            ->add('label', 'text', array('required' => false ))
             ->add('confirm', 'text', array('required' => false));
     }
 }

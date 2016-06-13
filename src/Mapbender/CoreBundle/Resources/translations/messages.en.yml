@@ -1,5 +1,9 @@
 mb:
   core:
+    logout:
+      title: 'logout element'
+      label: 'Abmelden'
+      confirm: 'Wirklich abmelden???'
     featureinfo:
       error:
         nolayer: 'No feature info layer exists.'

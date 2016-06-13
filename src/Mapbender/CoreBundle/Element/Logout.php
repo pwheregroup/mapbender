@@ -52,9 +52,9 @@ class Logout extends Element
     public static function getDefaultConfiguration()
     {
         return array(
-            'title'   => 'logout element',
-            'label'   => 'Abmelden',
-            'confirm' => 'Wirklich abmelden?'
+            'title'   => 'mb.core.logout.title', // logout element
+            'label'   => 'mb.core.logout.label',    // Abmelden
+            'confirm' => 'mb.core.logout.confirm' // Wirklich abmelden?
         );
     }
 
