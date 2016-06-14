@@ -2,6 +2,8 @@
 
 namespace Mapbender\CoreBundle\Tests;
 
+use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\DBAL\Connection;
 use Mapbender\CoreBundle\Mapbender;
 use Symfony\Bundle\FrameworkBundle\Console\Application as CmdApplication;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -15,6 +17,7 @@ use Symfony\Component\Console\Input\StringInput;
  */
 class TestBase extends WebTestCase
 {
+
     public function setUp()
     {
         static $kernel = null;
@@ -23,19 +26,31 @@ class TestBase extends WebTestCase
             return;
         }
 
-        $kernel = $this->getContainer()->get("kernel");
+        $kernel      = $this->getContainer()->get("kernel");
+        $appRootPath = $kernel->getRootDir();
+        $configPath  = $appRootPath . "/config/";
+        $configurationBaseFile = $configPath . "parameters.yml.dist";
+        $configurationFile = $configPath . "parameters.yml";
+        $isNewInstall = !file_exists($configurationFile);
         $isTestEnv = $kernel->getEnvironment() == "test";
 
-        $stdClass = $this->getContainer()->get("doctrineD");
+        if ($isNewInstall) {
+            \ComposerBootstrap::allowWriteLogs();
+            copy($configurationBaseFile, $configurationFile);
+            \ComposerBootstrap::clearCache();
+        }
 
-        if ($isTestEnv) {
-            //\ComposerBootstrap::allowWriteLogs();
-            //\ComposerBootstrap::clearCache();
-            $this->runCommand('doctrine:database:drop --force');
+
+        $connection = $this->getConnection();
+        $params      = $connection->getParams();
+        $hasDatabase = file_exists($params["path"]);
+        if($params["driver"] == "pdo_sqlite" && !$hasDatabase){
+            //$this->runCommand('doctrine:database:drop --force');
             $this->runCommand('doctrine:database:create');
             $this->runCommand('doctrine:schema:create');
             $this->runCommand('fom:user:resetroot --username=root --password=root --email=root@example.com --silent');
-            $this->runCommand('doctrine:fixtures:load --fixtures=./mapbender/src/Mapbender/CoreBundle/DataFixtures/ORM/Epsg/ --append');
+            $this->runCommand('doctrine:fixtures:load --fixtures=mapbender/src/Mapbender/CoreBundle/DataFixtures/ORM/Epsg/ --append');
+            $this->runCommand('doctrine:fixtures:load --fixtures=mapbender/src/Mapbender/CoreBundle/DataFixtures/ORM/Application/ --append');
         }
     }
 
@@ -92,5 +107,21 @@ class TestBase extends WebTestCase
     protected function getContainer()
     {
         return $this->getClient()->getContainer();
+    }
+
+    /**
+     * @return Connection
+     */
+    private function getConnection()
+    {
+        return $this->getDoctrine()->getConnection();
+    }
+
+    /**
+     * @return Registry
+     */
+    private function getDoctrine()
+    {
+        return $this->getContainer()->get('doctrine');
     }
 }
