@@ -5,6 +5,7 @@ namespace Mapbender\CoreBundle\Tests;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\DBAL\Connection;
 use Mapbender\CoreBundle\Mapbender;
+use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Bundle\FrameworkBundle\Console\Application as CmdApplication;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Console\Input\StringInput;
@@ -17,6 +18,24 @@ use Symfony\Component\Console\Input\StringInput;
  */
 class TestBase extends WebTestCase
 {
+    /** @var array options */
+    public static $options;
+
+    /** @var Client */
+    protected static $client;
+
+    /** @var CmdApplication Command application */
+    protected static $application;
+
+    public static function setUpBeforeClass()
+    {
+        self::$options     = $options = array();
+        self::$client      = $client = static::createClient($options);
+        self::$kernel      = $kernel = $client->getKernel();
+        self::$application = $application = new CmdApplication($kernel);
+
+        $application->setAutoExit(false);
+    }
 
     public function setUp()
     {
@@ -54,8 +73,6 @@ class TestBase extends WebTestCase
         }
     }
 
-    /** @var CmdApplication Command application */
-    protected $application;
 
     /**
      * Get CMD application
@@ -64,11 +81,7 @@ class TestBase extends WebTestCase
      */
     protected function getApplication()
     {
-        if (!$this->application) {
-            $this->application = new CmdApplication($this->getClient()->getKernel());
-            $this->application->setAutoExit(false);
-        }
-        return $this->application;
+        return self::$application;
     }
 
 
@@ -85,12 +98,11 @@ class TestBase extends WebTestCase
 
     /**
      * @param array $options
-     * @return \Symfony\Bundle\FrameworkBundle\Client
+     * @return Client
      */
     protected function getClient(array $options = array())
     {
-        static $client = null;
-        return $client ? $client : $client = static::createClient($options);
+        return self::$client;
     }
 
     /**
