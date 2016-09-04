@@ -2,6 +2,7 @@
 namespace Mapbender\PrintBundle\Component;
 
 use Mapbender\CoreBundle\Component\SecurityContext;
+use Mapbender\DigitizerBundle\Entity\Feature;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use OwsProxy3\CoreBundle\Component\ProxyQuery;
@@ -14,6 +15,10 @@ use OwsProxy3\CoreBundle\Component\CommonProxy;
  */
 class PrintService
 {
+    /** @var  Feature */
+    protected $feature;
+
+
     /** @var PDF_ImageAlpha */
     protected $pdf;
     protected $tempdir;
@@ -35,6 +40,13 @@ class PrintService
     public function __construct($container)
     {
         $this->container = $container;
+    }
+
+    /**
+     * @param Feature $feature
+     */
+    public function setFeature(Feature $feature) {
+        $this->feature = $feature;
     }
 
     public function doPrint($data)
@@ -412,6 +424,14 @@ class PrintService
                             $this->conf['fields']['scale']['height'],
                             '1 : ' . $this->data['scale_select']);
                         break;
+                    case 'feature' :
+                        if (isset($this->feature['extra'][$k])) {
+                            $pdf->MultiCell($this->conf['fields'][$k]['width'],
+                                $this->conf['fields'][$k]['height'],
+                                utf8_decode($this->feature['extra'][$k]));
+                        }
+                        break;
+
                     default:
                         if (isset($this->data['extra'][$k])) {
                             $pdf->MultiCell($this->conf['fields'][$k]['width'],
@@ -729,8 +749,16 @@ class PrintService
                 $this->conf['fields']['dynamic_text']['height'],
                 $group->getDescription());
         
-    }    
-    
+    }
+
+    /**
+     * @return Feature
+     */
+    public function getFeature()
+    {
+        return $this->feature;
+    }
+
     private function getColor($color, $alpha, $image)
     {
         list($r, $g, $b) = CSSColorParser::parse($color);

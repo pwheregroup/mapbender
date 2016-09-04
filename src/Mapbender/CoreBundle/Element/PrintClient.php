@@ -5,6 +5,7 @@ namespace Mapbender\CoreBundle\Element;
 use Mapbender\CoreBundle\Component\Element;
 use Mapbender\ManagerBundle\Component\Mapper;
 use Mapbender\PrintBundle\Component\OdgParser;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Mapbender\PrintBundle\Component\PrintService;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -52,11 +53,11 @@ class PrintClient extends Element
      */
     public static function listAssets()
     {
-        return array('js' => array('mapbender.element.printClient.js',
-                '@FOMCoreBundle/Resources/public/js/widgets/popup.js',
-                '@FOMCoreBundle/Resources/public/js/widgets/dropdown.js'),
-            'css' => array('@MapbenderCoreBundle/Resources/public/sass/element/printclient.scss'),
-            'trans' => array('MapbenderCoreBundle:Element:printclient.json.twig'));
+        return array('js'    => array('mapbender.element.printClient.js',
+                                      '@FOMCoreBundle/Resources/public/js/widgets/popup.js',
+                                      '@FOMCoreBundle/Resources/public/js/widgets/dropdown.js'),
+                     'css'   => array('@MapbenderCoreBundle/Resources/public/sass/element/printclient.scss'),
+                     'trans' => array('MapbenderCoreBundle:Element:printclient.json.twig'));
     }
 
     /**
@@ -158,16 +159,148 @@ class PrintClient extends Element
     /**
      * @inheritdoc
      */
-    public function render()
+    public function render($options=array())
     {
+        $configuration = $this->getConfiguration();
+        $templates = $configuration["templates"];
         return $this->container->get('templating')->render(
             'MapbenderCoreBundle:Element:printclient.html.twig',
             array(
                 'id' => $this->getId(),
                 'title' => $this->getTitle(),
-                'configuration' => $this->getConfiguration()
+                'configuration' => $configuration,
+                'templates' => $templates
             )
         );
+    }
+
+    /**
+     * helper for debug to php error log
+     *
+     * @author Jochen Schultz <jochen.schultz@wheregroup.com>
+     *
+     * @param $anytype
+     *
+     * @return boolean
+     */
+    public static function tempDebugToPhpErrorLog($anytype) {
+        ob_start();
+        var_dump($anytype);
+        $out = ob_get_clean();
+        trigger_error($out);
+        return false;
+    }
+
+    /**
+     * @param $options
+     * @return bool|\stdClass
+     */
+    private function getTemplatesSelectFromFeatureType($options) {
+
+        // @todo: default Templates from Configuration
+
+        // Templates from featureType configuration in parameters.yml
+        $featuretypes = $this->container->getParameter('featureTypes');
+        // self::tempDebugToPhpErrorLog($featuretypes[$options["featureType"]]['print']['templates']);
+        if (isset($featuretypes[$options["featureType"]])
+            && isset($featuretypes[$options["featureType"]]['print'])
+            && isset($featuretypes[$options["featureType"]]['print']['templates'])
+            && isset($featuretypes[$options["featureType"]]['print']['templates'][0])
+            && isset($featuretypes[$options["featureType"]]['print']['templates'][0]['name'])
+        ) {
+            $templates = new \stdClass();
+            $templates->type  = 'select';
+            $templates->title = 'Vorlage';
+            $templates->name = 'template';
+            $templates->value = $featuretypes[$options["featureType"]]['print']['templates'][0]['name'];
+            foreach($featuretypes[$options["featureType"]]['print']['templates'] as $option) {
+                $templates->options[$option['name']] = $option['title'];
+            }
+            return $templates;
+        } else {
+            return false;
+        }
+    }
+
+    private function getScalesSelectFromConfiguration() {
+        $configuration = $this->getConfiguration();
+        if (!isset($configuration['scales'])) {
+            $configuration = self::getDefaultConfiguration();
+        }
+        //self::tempDebugToPhpErrorLog($configuration);
+        if (isset($configuration['scales'])&&isset($configuration['scales'][0])) {
+            $scales = new \stdClass();
+            $scales->type  = 'select';
+            $scales->title = 'Maßstab';
+            $scales->name = 'scale_select';
+            $scales->value = $configuration['scales'][0];
+            for($i=0,$cnt=count($configuration['scales']);$i<$cnt;$i++) {
+                $scales->options[$configuration['scales'][$i]] = '1:'.$configuration['scales'][$i];
+            }
+            return $scales;
+        } else {
+            return false;
+        }
+    }
+
+    private function getQualitySelectFromConfiguration() {
+        $configuration = $this->getConfiguration();
+        if (!isset($configuration['quality_levels'])) {
+            $configuration = self::getDefaultConfiguration();
+        }
+        //self::tempDebugToPhpErrorLog($configuration['quality_levels']);
+        if (isset($configuration['quality_levels'])&&is_array($configuration['quality_levels'])) {
+            $quality_levels = new \stdClass();
+            $quality_levels->type  = 'select';
+            $quality_levels->title = 'Maßstab';
+            $quality_levels->name = 'quality';
+            $quality_levels->value = key($configuration['quality_levels']);
+            $quality_levels->options = $configuration['quality_levels'];
+            return $quality_levels;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * suitable for formgenerator
+     *
+     * @param array $options
+     * @return array namefields used as children of formgenerator type form -> mapbender.element.prinClient.js
+     * @throws \Exception
+     */
+    public function getPrintFeatureDialogJson($options=array())
+    {
+        if (!isset($options["featureType"])) {
+            throw new \Exception('FeatureType missing');
+        }
+        $nameFields = array();
+
+        $templates = $this->getTemplatesSelectFromFeatureType($options);
+        if (!$templates) {
+            throw new \Exception('FeatureType has no print template');
+        } else {
+            $nameFields['templates'] = $templates;
+        }
+
+        $quality = $this->getQualitySelectFromConfiguration();
+        if (!$quality) {
+            throw new \Exception('FeatureType has no print quality');
+        } else {
+            $nameFields['quality'] = $quality;
+        }
+
+        $scales = $this->getScalesSelectFromConfiguration();
+        if (!$scales) {
+            throw new \Exception('FeatureType has no print scale');
+        } else {
+            $nameFields['scales'] = $scales;
+        }
+
+        // @todo: add fields from configuration: "rotation", "Comment 1", "Comment 2", "Print Legend"
+
+        $response = array('nameFields' => $nameFields);
+        return $response;
     }
 
     /**
@@ -178,6 +311,17 @@ class PrintClient extends Element
         $request = $this->container->get('request');
         $configuration = $this->getConfiguration();
         switch ($action) {
+
+            case 'printFeatureDialog':
+
+                $options = ['featureId' => $_REQUEST['featureId'], 'featureType' => $_REQUEST['featureType']];
+
+                // $featureTypeManager = $this->container->get("features");
+                // $feature            = $featureTypeManager->get($options["featureType"])->getById($options['featureId']);
+                // $featureData        = $feature->getAttributes();
+
+                return new JsonResponse($this->getPrintFeatureDialogJson($options));
+
             case 'print':
 
                 $data = $request->request->all();

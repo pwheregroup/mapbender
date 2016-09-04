@@ -69,6 +69,74 @@
             this.open(callback);
         },
 
+        /**
+         * Open feature popup print dialog
+         *
+         * @param featureTypeName feature type name
+         * @param featureId feature id
+         */
+        openFeatureDialog: function(featureTypeName, featureId) {
+
+            var widget = this;
+            var element = $(widget.element);
+
+            this.query( 'printFeatureDialog',{featureId:featureId,featureType:featureTypeName}, 'GET').success(function(response) {
+
+                // Response includes a serverside build child of formgenerator - it is incomplete!
+                console.log(response.nameFields);
+
+                var form = [{
+                    type:     "form",
+                    cssClass: "printfeatureform",
+                    children: response.nameFields
+                }];
+
+                element.generateElements({
+                    children: form,
+                    type:     "popup",
+                    title:    "Druck",
+                    cssClass: "printfeaturedialog",
+                    buttons:     [{
+                        text:  Mapbender.trans('mb.core.printclient.popup.btn.ok'),
+                        cssClass: 'button right',
+                        click: function(e) {
+                            var form = $(e.currentTarget).closest(".ui-dialog").find("form");
+                            console.log(form.formData());
+                            widget._print();
+                        }
+                    },{
+                        text:  Mapbender.trans('mb.core.printclient.popup.btn.cancel'),
+                        cssClass: 'button buttonCancel critical right',
+                        click: function(e) {
+                            $('.printfeaturedialog').parent().find('.close').trigger('click');
+                            widget._updateElements(false);
+                        }
+                    }]
+                });
+
+                /*
+                @Todo:
+
+                        1. Add Fields    "rotation", "Comment 1", "Comment 2", "Print Legend"
+                        2. Add events
+                                $('select[name="scale_select"]', element).on('change', $.proxy(this._updateGeometry, this));
+                                $('input[name="rotation"]', element).on('keyup', $.proxy(this._updateGeometry, this));
+
+                                // Change size of template
+                                $('.printfeatureform select[name="template"]').on('change',... widget._getTemplateSize();
+                        3. Add actual print functionality
+
+                     The following might be buggy, needs to be tested:
+                 */
+
+                element.show();
+                widget._getTemplateSize();
+                widget._updateElements(true);
+                widget._setScale();
+
+            });
+        },
+
         open: function(callback){
             this.callback = callback ? callback : null;
             var self = this;
@@ -492,6 +560,7 @@
             // Post in neuen Tab (action bei form anpassen)
             var url =  this.elementUrl + 'print';
 
+
             form.get(0).setAttribute('action', url);
             form.attr('target', '_blank');
             form.attr('method', 'post');
@@ -512,17 +581,27 @@
             var self = this;
             var template = $('select[name="template"]', this.element).val();
 
-            var url =  this.elementUrl + 'getTemplateSize';
-            $.ajax({
-                url: url,
-                type: 'GET',
-                data: {template: template},
-                dataType: "json",
-                success: function(data) {
-                    self.width = data.width;
-                    self.height = data.height;
-                    self._updateGeometry();
-                }
+            self.query("getTemplateSize",{template: template}).success(function(data){
+                self.width = data.width;
+                self.height = data.height;
+                self._updateGeometry();
+            });
+        },
+
+        /**
+         * Ajax query to element
+         *
+         * @param uri
+         * @param request
+         * @param type
+         * @returns {*}
+         */
+        query: function(uri,request, type) {
+            return $.ajax({
+                url:      this.elementUrl + uri,
+                type:     type ? type : 'GET',
+                data:     request,
+                dataType: "json"
             });
         },
 

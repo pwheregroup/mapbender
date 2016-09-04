@@ -10,7 +10,7 @@
         <label class="labelInput">{{ 'mb.core.printclient.label.template' | trans }}</label>
         <div class="dropdown">
             <select name="template" class="hiddenDropdown">
-                {% for id, template in configuration.templates %}
+                {% for id, template in templates %}
                     <option value="{{ id }}">{{ template.label }}</option>
                 {% endfor %}
             </select>
