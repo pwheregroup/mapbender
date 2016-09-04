@@ -8,6 +8,7 @@ use Mapbender\CoreBundle\Component\Application;
 use Mapbender\CoreBundle\Component\EntityHandler;
 use Mapbender\CoreBundle\Component\SecurityContext;
 use Mapbender\CoreBundle\Entity\Application as ApplicationEntity;
+use Mapbender\PrintBundle\Component\PrintService;
 use OwsProxy3\CoreBundle\Component\CommonProxy;
 use OwsProxy3\CoreBundle\Component\ProxyQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -28,6 +29,11 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  */
 class ApplicationController extends Controller
 {
+    protected static $types = array(
+        'css'   => 'text/css',
+        'js'    => 'application/javascript',
+        'trans' => 'application/javascript'
+    );
 
     /**
      * Get runtime URLs
@@ -392,10 +398,6 @@ class ApplicationController extends Controller
      */
     protected function getMimeType($type)
     {
-        static $types = array(
-            'css'   => 'text/css',
-            'js'    => 'application/javascript',
-            'trans' => 'application/javascript');
-        return $types[$type];
+        return static::$types[$type];
     }
 }
