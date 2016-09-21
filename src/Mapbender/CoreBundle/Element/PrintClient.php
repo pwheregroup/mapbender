@@ -212,6 +212,7 @@ class PrintClient extends Element
             $templates->type  = 'select';
             $templates->title = 'Vorlage';
             $templates->name = 'template';
+            $templates->cssClass = 'template';
             $templates->value = $featuretypes[$options["featureType"]]['print']['templates'][0]['name'];
             foreach($featuretypes[$options["featureType"]]['print']['templates'] as $option) {
                 $templates->options[$option['name']] = $option['title'];
@@ -233,6 +234,7 @@ class PrintClient extends Element
             $scales->type  = 'select';
             $scales->title = 'Maßstab';
             $scales->name = 'scale_select';
+            $scales->cssClass = 'scale';
             $scales->value = $configuration['scales'][0];
             for($i=0,$cnt=count($configuration['scales']);$i<$cnt;$i++) {
                 $scales->options[$configuration['scales'][$i]] = '1:'.$configuration['scales'][$i];
@@ -252,14 +254,27 @@ class PrintClient extends Element
         if (isset($configuration['quality_levels'])&&is_array($configuration['quality_levels'])) {
             $quality_levels = new \stdClass();
             $quality_levels->type  = 'select';
-            $quality_levels->title = 'Maßstab';
+            $quality_levels->title = 'Qualität';
             $quality_levels->name = 'quality';
+            $quality_levels->cssClass = 'quality';
             $quality_levels->value = key($configuration['quality_levels']);
             $quality_levels->options = $configuration['quality_levels'];
             return $quality_levels;
         } else {
             return false;
         }
+    }
+
+    private function createFormField($type,$title,$name,$cssclass='',$value='') {
+        $input = new \stdClass();
+        $input->type  = $type;
+        if (!empty($cssclass)) {
+            $input->cssClass = $cssclass;
+        }
+        $input->title = $title;
+        $input->name = $name;
+        $input->value = $value;
+        return $input;
     }
 
     /**
@@ -297,7 +312,12 @@ class PrintClient extends Element
             $nameFields['scales'] = $scales;
         }
 
-        // @todo: add fields from configuration: "rotation", "Comment 1", "Comment 2", "Print Legend"
+        $nameFields['rotation'] = $this->createFormField('input','Drehung','rotation','rotation',0);
+        $nameFields['comment1'] = $this->createFormField('input','Kommentar 1','comment1','comment1');
+        $nameFields['comment2'] = $this->createFormField('input','Kommentar 2','comment2','comment2');
+        $nameFields['hiddensubmit'] = $this->createFormField('submit','abschicken','submit','hidden');
+
+        $nameFields['printlegend'] = $this->createFormField('checkbox','Legende drucken','printLegend','printlegend');
 
         $response = array('nameFields' => $nameFields);
         return $response;
