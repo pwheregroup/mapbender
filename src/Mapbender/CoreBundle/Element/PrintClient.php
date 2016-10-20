@@ -175,151 +175,31 @@ class PrintClient extends Element
     }
 
     /**
-     * helper for debug to php error log
-     *
-     * @author Jochen Schultz <jochen.schultz@wheregroup.com>
-     *
-     * @param $anytype
-     *
-     * @return boolean
+     * @param array $options (optional / e.g. "featureType:kanaele" ---> parameters.yml)
+     * @return array - give full control to frontend aka javascript junkies
      */
-    public static function tempDebugToPhpErrorLog($anytype) {
-        ob_start();
-        var_dump($anytype);
-        $out = ob_get_clean();
-        trigger_error($out);
-        return false;
-    }
-
-    /**
-     * @param $options
-     * @return bool|\stdClass
-     */
-    private function getTemplatesSelectFromFeatureType($options) {
-
-        // @todo: default Templates from Configuration
-
-        // Templates from featureType configuration in parameters.yml
-        $featuretypes = $this->container->getParameter('featureTypes');
-        // self::tempDebugToPhpErrorLog($featuretypes[$options["featureType"]]['print']['templates']);
-        if (isset($featuretypes[$options["featureType"]])
-            && isset($featuretypes[$options["featureType"]]['print'])
-            && isset($featuretypes[$options["featureType"]]['print']['templates'])
-            && isset($featuretypes[$options["featureType"]]['print']['templates'][0])
-            && isset($featuretypes[$options["featureType"]]['print']['templates'][0]['name'])
-        ) {
-            $templates = new \stdClass();
-            $templates->type  = 'select';
-            $templates->title = 'Vorlage';
-            $templates->name = 'template';
-            $templates->cssClass = 'template';
-            $templates->value = $featuretypes[$options["featureType"]]['print']['templates'][0]['name'];
-            foreach($featuretypes[$options["featureType"]]['print']['templates'] as $option) {
-                $templates->options[$option['name']] = $option['title'];
-            }
-            return $templates;
-        } else {
-            return false;
-        }
-    }
-
-    private function getScalesSelectFromConfiguration() {
-        $configuration = $this->getConfiguration();
-        if (!isset($configuration['scales'])) {
-            $configuration = self::getDefaultConfiguration();
-        }
-        //self::tempDebugToPhpErrorLog($configuration);
-        if (isset($configuration['scales'])&&isset($configuration['scales'][0])) {
-            $scales = new \stdClass();
-            $scales->type  = 'select';
-            $scales->title = 'Maßstab';
-            $scales->name = 'scale_select';
-            $scales->cssClass = 'scale';
-            $scales->value = $configuration['scales'][0];
-            for($i=0,$cnt=count($configuration['scales']);$i<$cnt;$i++) {
-                $scales->options[$configuration['scales'][$i]] = '1:'.$configuration['scales'][$i];
-            }
-            return $scales;
-        } else {
-            return false;
-        }
-    }
-
-    private function getQualitySelectFromConfiguration() {
-        $configuration = $this->getConfiguration();
-        if (!isset($configuration['quality_levels'])) {
-            $configuration = self::getDefaultConfiguration();
-        }
-        //self::tempDebugToPhpErrorLog($configuration['quality_levels']);
-        if (isset($configuration['quality_levels'])&&is_array($configuration['quality_levels'])) {
-            $quality_levels = new \stdClass();
-            $quality_levels->type  = 'select';
-            $quality_levels->title = 'Qualität';
-            $quality_levels->name = 'quality';
-            $quality_levels->cssClass = 'quality';
-            $quality_levels->value = key($configuration['quality_levels']);
-            $quality_levels->options = $configuration['quality_levels'];
-            return $quality_levels;
-        } else {
-            return false;
-        }
-    }
-
-    private function createFormField($type,$title,$name,$cssclass='',$value='') {
-        $input = new \stdClass();
-        $input->type  = $type;
-        if (!empty($cssclass)) {
-            $input->cssClass = $cssclass;
-        }
-        $input->title = $title;
-        $input->name = $name;
-        $input->value = $value;
-        return $input;
-    }
-
-    /**
-     * suitable for formgenerator
-     *
-     * @param array $options
-     * @return array namefields used as children of formgenerator type form -> mapbender.element.prinClient.js
-     * @throws \Exception
-     */
-    public function getPrintFeatureDialogJson($options=array())
+    public function getFormGeneratorPrintDialogData($options=array())
     {
-        if (!isset($options["featureType"])) {
-            throw new \Exception('FeatureType missing');
+        $configuration = $this->getConfiguration();
+        if (isset($options["featureType"])) {
+            $featureTypes = $this->container->getParameter('featureTypes');
+            $configuration["templates"] = array();
+            foreach($featureTypes[$options["featureType"]]['print']['templates'] as $key => $value) {
+                $configuration["templates"][$value['name']] = $value['title'];
+            }
         }
-        $nameFields = array();
-
-        $templates = $this->getTemplatesSelectFromFeatureType($options);
-        if (!$templates) {
-            throw new \Exception('FeatureType has no print template');
-        } else {
-            $nameFields['templates'] = $templates;
+        $scales = array();
+        foreach($configuration["scales"] as $key => $val) {
+            $scales[$val]  = '1:'.$val;
         }
-
-        $quality = $this->getQualitySelectFromConfiguration();
-        if (!$quality) {
-            throw new \Exception('FeatureType has no print quality');
-        } else {
-            $nameFields['quality'] = $quality;
-        }
-
-        $scales = $this->getScalesSelectFromConfiguration();
-        if (!$scales) {
-            throw new \Exception('FeatureType has no print scale');
-        } else {
-            $nameFields['scales'] = $scales;
-        }
-
-        $nameFields['rotation'] = $this->createFormField('input','Drehung','rotation','rotation',0);
-        $nameFields['comment1'] = $this->createFormField('input','Kommentar 1','comment1','comment1');
-        $nameFields['comment2'] = $this->createFormField('input','Kommentar 2','comment2','comment2');
-        $nameFields['hiddensubmit'] = $this->createFormField('submit','abschicken','submit','hidden');
-
-        $nameFields['printlegend'] = $this->createFormField('checkbox','Legende drucken','printLegend','printlegend');
-
-        $response = array('nameFields' => $nameFields);
+        $configuration["scales"] = array();
+        $configuration["scales"] = $scales;
+        $response = array(
+            'id' => $this->getId(),
+            'title' => $this->getTitle(),
+            'configuration' => $configuration,
+            'options' => $options
+        );
         return $response;
     }
 
@@ -333,18 +213,20 @@ class PrintClient extends Element
         switch ($action) {
 
             case 'printFeatureDialog':
-
-                $options = ['featureId' => $_REQUEST['featureId'], 'featureType' => $_REQUEST['featureType']];
-
-                // $featureTypeManager = $this->container->get("features");
-                // $feature            = $featureTypeManager->get($options["featureType"])->getById($options['featureId']);
-                // $featureData        = $feature->getAttributes();
-
-                return new JsonResponse($this->getPrintFeatureDialogJson($options));
+                return new JsonResponse($this->getFormGeneratorPrintDialogData($request->query->all()));
 
             case 'print':
 
+                $printservice = new PrintService($this->container);
                 $data = $request->request->all();
+
+                if (isset($data['featureType'])) {
+                    $featureTypeManager = $this->container->get("features");
+                    $featureType        = $featureTypeManager->get($data["featureType"]);
+                    $feature            = $featureType->getById($data['featureId']);
+                    //$data['feature']    = $feature->getAttributes();
+                    $printservice->setFeature($feature);
+                }
 
                 foreach ($data['layers'] as $idx => $layer) {
                     $data['layers'][$idx] = json_decode($layer, true);
@@ -376,7 +258,6 @@ class PrintClient extends Element
                     $data['legends'] = json_decode($data['legends'], true);
                 }
 
-                $printservice = new PrintService($this->container);
 
                 $displayInline = true;
                 $filename = 'mapbender_print.pdf';

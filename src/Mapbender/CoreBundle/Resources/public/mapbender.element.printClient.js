@@ -71,9 +71,7 @@
         },
 
         defaultAction: function(callback) {
-
             var widget = this;
-
             widget.open(callback);
         },
 
@@ -84,57 +82,127 @@
          * @param featureId feature id
          */
         openFeatureDialog: function(featureTypeName, featureId) {
-
             var widget = this;
-
             widget.query( 'printFeatureDialog',{featureId:featureId,featureType:featureTypeName}, 'GET').success(function(response) {
+                var configuration = response.configuration;
+                var nameFields = [{
+                        title : Mapbender.trans('mb.core.printclient.label.template'),
+                        type : "select",
+                        cssClass : "printfeatureform",
+                        name : "templates",
+                        options : configuration.templates,
+                        value : _.keys(configuration.templates)[0]
+                    },
+                    {
+                        title : Mapbender.trans('mb.core.printclient.label.quality'),
+                        type : "select",
+                        cssClass : "printfeatureform",
+                        name : "quality",
+                        options : configuration.quality_levels,
+                        value : _.keys(configuration.quality_levels)[0]
+                    },
+                    {
+                        title : Mapbender.trans('mb.core.printclient.label.scale'),
+                        type : "select",
+                        cssClass : "printfeatureform",
+                        name : "scale_select",
+                        options : configuration.scales,
+                        value : _.keys(configuration.scales)[0]
+                    },
+                    {
+                        title : Mapbender.trans('mb.core.printclient.label.rotation'),
+                        type : "input",
+                        cssClass : "printfeatureform",
+                        name : "rotation",
+                        value : 0
+                    },
+                ];
+                if (configuration.optional_fields) {
+                    _.each(configuration.optional_fields, function(key) {
+                        var additionalfield = {
+                            title : key.label, // yay :P
+                            type : "input",
+                            cssClass : "printfeatureform",
+                            name : key,
+                            value : ""
+                        }
+                        nameFields = nameFields.concat(additionalfield);
+                    })
+                }
+                var legend = {
+                    title : Mapbender.trans('mb.core.printclient.label.legend'),
+                    type : "checkbox",
+                    cssClass : "printfeatureform",
+                    name : "legend",
+                    value : ""
+                }
+                nameFields = nameFields.concat(legend);
 
-                // Response includes a serverside build child of formgenerator - it is incomplete!
-                // console.log(response);
+                var submitbtn = {
+                    title : false,
+                    type : "submit",
+                    cssClass : "hidden2",
+                    value : "test"
+                }
+                nameFields = nameFields.concat(submitbtn);
 
                 var formElement = $("<div/>").generateElements({
                     type:     "form",
                     cssClass: "printfeatureform",
-                    children: _.toArray(response.nameFields)
+                    children: nameFields
                 });
+                if (configuration.type == 'dialog') {
+                    widget.formElement = formElement;
+                    formElement.popupDialog({
+                        title: "Druck",
+                        cssClass: "printfeaturedialog",
+                        buttons: [{
+                            text:  Mapbender.trans('mb.core.printclient.popup.btn.ok'),
+                            cssClass: 'button right',
+                            click: function(e) {
+                                var form = $(e.currentTarget).closest(".ui-dialog").find("form");
+                                var formData = form.formData();
+                                formData.featureType = featureTypeName;
+                                formData.featureId = featureId;
+                                widget._print(formData);
+                            }
+                        },{
+                            text:  Mapbender.trans('mb.core.printclient.popup.btn.cancel'),
+                            cssClass: 'button buttonCancel critical right',
+                            click: function(e) {
+                                $('.printfeaturedialog').parent().find('.close').trigger('click');
+                                widget._updateElements(false);
+                            }
+                        }],
+                        create: function( event, ui ) {
+                            widget.formElement.find("[name='rotation']").off();
+                            widget.formElement.find("[name='templates']").off();
+                            widget.formElement.find("[name='scale_select']").off();
 
-                widget.formElement = formElement;
-
-                formElement.popupDialog({
-                    title:    "Druck",
-                    cssClass: "printfeaturedialog",
-                    buttons:     [{
-                        text:  Mapbender.trans('mb.core.printclient.popup.btn.ok'),
-                        cssClass: 'button right',
-                        click: function(e) {
-                            var form = $(e.currentTarget).closest(".ui-dialog").find("form");
-                            console.log(form.formData());
-                            widget._print();
+                            widget.formElement.find("[name='rotation']").on('input',function(){
+                                console.log('rotation');
+                                widget._updateGeometry.call(widget,false);
+                            });
+                            widget.formElement.find("[name='templates']").on('change',function(){
+                                console.log('templates');
+                                widget._getTemplateSize();
+                                widget._updateElements(true);
+                                widget._setScale();
+                            });
+                            widget.formElement.find("[name='scale_select']").on('change',function(){
+                                console.log('scale_select');
+                                widget._getTemplateSize();
+                                widget._updateElements(true);
+                                widget._setScale();
+                                widget._updateGeometry.call(widget,false);
+                            });
+                            console.log('create');
+                            widget._getTemplateSize();
+                            widget._updateElements(true);
+                            widget._setScale();
                         }
-                    },{
-                        text:  Mapbender.trans('mb.core.printclient.popup.btn.cancel'),
-                        cssClass: 'button buttonCancel critical right',
-                        click: function(e) {
-                            $('.printfeaturedialog').parent().find('.close').trigger('click');
-                            widget._updateElements(false);
-                        }
-                    }]
-                });
-
-                widget.formElement.find("[name='rotation']").on('input',function(){
-                    widget._updateGeometry.call(widget,false);
-                });
-
-                widget.formElement.find("[name='templates']").on('change',function(){
-                    widget._getTemplateSize();
-                    widget._updateElements(true);
-                    widget._setScale();
-                });
-
-                widget._getTemplateSize();
-                widget._updateElements(true);
-                widget._setScale();
-
+                    });
+                }
             });
         },
 
@@ -211,6 +279,8 @@
                 var select = $(widget.element).find("select[name='scale_select']");
             }
 
+
+
             var styledSelect = select.parent().find(".dropdownValue.iconDown");
             var scales = widget.options.scales;
             var currentScale = Math.round(widget.map.map.olMap.getScale());
@@ -236,6 +306,7 @@
             select.val(selectValue);
             styledSelect.html('1:'+selectValue);
 
+            console.log('set_scale - update geo');
             widget._updateGeometry(true);
         },
 
@@ -401,7 +472,7 @@
             return data;
         },
 
-        _print: function() {
+        _print: function(options) {
 
             var widget = this;
 
@@ -439,6 +510,24 @@
                 name: 'center[y]',
                 value: extent.center.y
             }));
+
+            // in case we got a selected feature merge it dynamically
+
+            options = {};
+            options.featureType = 'kanaele';
+            options.featureId = 163;
+            if (options && options.featureType) {
+                $.merge(fields, $('<input />', {
+                    type:  'hidden',
+                    name:  'featureType',
+                    value: options.featureType
+                }));
+                $.merge(fields, $('<input />', {
+                    type:  'hidden',
+                    name:  'featureId',
+                    value: options.featureId
+                }));
+            }
 
             // extent feature
             var feature_coords = new Array();
