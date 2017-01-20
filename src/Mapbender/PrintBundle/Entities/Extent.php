@@ -31,11 +31,11 @@ class Extent
      * @param float $width
      * @param float $height
      */
-    public function __construct(Coordinate $offset,$width, $height)
+    public function __construct($width, $height,Coordinate $offset=NULL)
     {
-        $this->offset = $offset;
         $this->width = $width;
         $this->height = $height;
+        $this->offset = $offset;
     }
 
 
