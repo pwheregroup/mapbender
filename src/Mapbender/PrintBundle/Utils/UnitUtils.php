@@ -35,4 +35,21 @@ class UnitUtils
     }
 
 
+    public static function convert($unit,$values){
+
+        $result=$values;
+
+        switch (strtolower($unit)) {
+
+            case "mm":
+               return array_map(array(UnitUtils::class, "convertInchesToMm"),$values,$result);
+
+            case "cm":
+                return array_map(array(UnitUtils::class, "convertInchesToCm"),$values,$result);
+
+        }
+
+        return $result;
+    }
+
 }
