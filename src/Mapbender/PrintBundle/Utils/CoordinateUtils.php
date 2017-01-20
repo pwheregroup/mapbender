@@ -6,6 +6,7 @@ namespace Mapbender\PrintBundle\Utils;
 
 use Mapbender\PrintBundle\Entities\Bounds;
 use Mapbender\PrintBundle\Entities\Coordinate;
+use Mapbender\PrintBundle\Entities\Extent;
 use Mapbender\PrintBundle\Entities\PrintConfiguration;
 use Mapbender\PrintBundle\Entities\PrintData;
 
@@ -32,12 +33,11 @@ class CoordinateUtils
         return self::round(UnitUtils::convert($printConfiguration->getUnit(), array($x, $y)));
     }
 
-    public static function convertRealWorldToOverviewMapCoordinates(PrintConfiguration $printConfiguration, PrintData $printData, Coordinate $realWorldCoordinate, $ovWidth, $ovHeight)
+    public static function convertRealWorldToOverviewMapCoordinates(PrintConfiguration $printConfiguration, PrintData $printData, Coordinate $realWorldCoordinate, Bounds $overViewCoordinate)
     {
 
         $quality = $printData->getQuality();
-
-        $bounds = Bounds::from($printData->getCenter(), $ovWidth, $ovHeight);
+        $bounds = Bounds::from($printData->getCenter(), $overViewCoordinate->getWidth(), $overViewCoordinate->getHeight());
 
         $scaleX = self::getFraction($realWorldCoordinate->getX(), $bounds->getMinX(), $bounds->getWidth());
         $scaleY = self::getFraction($bounds->getMaxY(), $realWorldCoordinate->getY(), $bounds->getHeight());
@@ -50,20 +50,43 @@ class CoordinateUtils
     }
 
 
-    public static function realWorld2rotatedMapPos($rw_x, $rw_y)
+    private static function getRotatedExtent(Extent $mapExtent, $rotation)
     {
-        $centerx = $this->data['center']['x'];
-        $centery = $this->data['center']['y'];
-        $minX = $centerx - $this->neededExtentWidth * 0.5;
-        $minY = $centery - $this->neededExtentHeight * 0.5;
-        $maxX = $centerx + $this->neededExtentWidth * 0.5;
-        $maxY = $centery + $this->neededExtentHeight * 0.5;
-        $extentx = $maxX - $minX;
-        $extenty = $maxY - $minY;
-        $pixPos_x = (($rw_x - $minX) / $extentx) * $this->neededImageWidth;
-        $pixPos_y = (($maxY - $rw_y) / $extenty) * $this->neededImageHeight;
 
-        return array($pixPos_x, $pixPos_y);
+        $extentWidth = $mapExtent->getWidth();
+        $extentHeight = $mapExtent->getHeight();
+
+        $calculatedExtentWidth =
+            abs(sin(deg2rad($rotation)) * $extentHeight) +
+            abs(cos(deg2rad($rotation)) * $extentWidth);
+
+        $calculatedExtentHeight =
+            abs(sin(deg2rad($rotation)) * $extentWidth) +
+            abs(cos(deg2rad($rotation)) * $extentHeight);
+
+        return new Extent($calculatedExtentWidth, $calculatedExtentHeight);
+    }
+
+
+    public static function convertRealWorldToRotatedMapCoordinates(PrintConfiguration $printConfiguration, PrintData $printData, Coordinate $realWorldCoordinate)
+    {
+        $mapExtent = $printData->getMapExtent();
+
+        $rotatedExtent = self::getRotatedExtent($mapExtent, $printData->getRotation());
+
+        $bounds = Bounds::from($printData->getCenter(), $rotatedExtent->getWidth(), $rotatedExtent->getHeight());
+
+        // TODO: build the WMS Size Parameters
+        // $width = '&WIDTH=' . $neededImageWidth;
+        // $height = '&HEIGHT=' . $neededImageHeight;
+
+        $scaleX = self::getFraction($realWorldCoordinate->getX(), $bounds->getMinX(), $bounds->getWidth());
+        $scaleY = self::getFraction($bounds->getMaxY(), $realWorldCoordinate->getY(), $bounds->getHeight());
+
+        $x = $scaleX * $rotatedExtent->getWidth();
+        $y = $scaleY * $rotatedExtent->getHeight();
+
+        return self::round(UnitUtils::convert($printConfiguration->getUnit(), array($x, $y)));
     }
 
 
