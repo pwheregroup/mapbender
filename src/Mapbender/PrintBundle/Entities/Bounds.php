@@ -11,7 +11,6 @@ namespace Mapbender\PrintBundle\Entities;
 class Bounds
 {
 
-
     /**
      * Bounds constructor.
      * @param float $minX
@@ -25,6 +24,14 @@ class Bounds
         $this->maxX = $maxX;
         $this->minY = $minY;
         $this->maxY = $maxY;
+    }
+
+    public static function from(Coordinate $center, $width, $height, $xRatio = 0.5, $yRatio = 0.5)
+    {
+
+        list($minX, $minY, $maxX, $maxY) = array($center->getX() - $width * $xRatio, $center->getY() - $height * $yRatio, $center->getX() + $width * $xRatio, $center->getY() + $height * $yRatio);
+
+        return new Bounds($minX, $maxX, $minY, $maxY);
     }
 
     /**
