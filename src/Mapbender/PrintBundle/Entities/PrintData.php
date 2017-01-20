@@ -17,7 +17,6 @@ class PrintData
      */
     private $quality;
 
-
     /**
      * @var Extent
      */
@@ -27,6 +26,12 @@ class PrintData
      * @var Coordinate
      */
     private $center;
+
+
+    /**
+     * @var float
+     */
+    private $rotation;
 
     /**
      * @return float
@@ -67,12 +72,29 @@ class PrintData
     {
         return $this->center;
     }
+
     /**
      * @param Coordinate $center
      */
     public function setCenter($center)
     {
         $this->center = $center;
+    }
+
+    /**
+     * @return float
+     */
+    public function getRotation()
+    {
+        return $this->rotation;
+    }
+
+    /**
+     * @param float $rotation
+     */
+    public function setRotation($rotation)
+    {
+        $this->rotation = $rotation;
     }
 
 
@@ -91,4 +113,5 @@ class PrintData
 
         return new Bounds($minX,$maxX,$minY,$maxY);
     }
+
 }
