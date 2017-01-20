@@ -6,6 +6,7 @@ namespace Mapbender\PrintBundle\Utils;
 
 use Mapbender\PrintBundle\Entities\Coordinate;
 use Mapbender\PrintBundle\Entities\Extent;
+use Mapbender\PrintBundle\Entities\PrintConfiguration;
 use Mapbender\PrintBundle\Entities\PrintData;
 
 /**
@@ -16,21 +17,19 @@ use Mapbender\PrintBundle\Entities\PrintData;
 class CoordinateUtils
 {
 
-
-    public static function realWorld2mapPos(PrintData $printData, Coordinate $realWorldCoordinate)
+    public static function convertRealWorldToMapCoordinates(PrintData $printData, Coordinate $realWorldCoordinate, PrintConfiguration $printConfiguration)
     {
 
         $quality = $printData->getQuality();
+        $mapBounds = $printData->getMapBounds();
 
-        $extentX = $printData->getMapBounds()->getWidth();
-        $extentY = $printData->getMapBounds()->getHeight();
-        $minX = $printData->getMapBounds()->getMinX();
-        $maxY = $printData->getMapBounds()->getMaxY();
+        $scaleX = self::getFraction($realWorldCoordinate->getX(), $mapBounds->getMinX(), $mapBounds->getWidth());
+        $scaleY = self::getFraction($mapBounds->getMaxY(), $realWorldCoordinate->getY(), $mapBounds->getHeight());
 
-        $pixPos_x = (($realWorldCoordinate->getX() - $minX) / $extentX) * round($this->conf['map']['width'] / 25.4 * $quality);
-        $pixPos_y = (($maxY - $realWorldCoordinate->getY()) / $extentY) * round($this->conf['map']['height'] / 25.4 * $quality);
+        $x = $scaleX * $printConfiguration->getMap()->getWidth() * $quality;
+        $y = $scaleY * $printConfiguration->getMap()->getHeight() * $quality;
 
-        return array($pixPos_x, $pixPos_y);
+        return UnitUtils::convert($printConfiguration->getUnit(), array($x, $y));
     }
 
     public static function realWorld2ovMapPos($ovWidth, $ovHeight, $rw_x, $rw_y)
@@ -66,5 +65,9 @@ class CoordinateUtils
         return array($pixPos_x, $pixPos_y);
     }
 
+    private static function getFraction($maxA, $minA, $max)
+    {
+        return ($maxA - $minA) / $max;
+    }
 
 }
