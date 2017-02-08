@@ -1,43 +1,39 @@
 <?php
-
 namespace Mapbender\WmsBundle\Component;
 
 /**
  * LegendUrl class.
+ *
  * @author Paul Schmidt
  */
 class LegendUrl
 {
-
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    //@TODO Doctrine bug: "protected" replaced with "public"
-    public $onlineResource;
+    protected $onlineResource;
 
     /**
      * ORM\Column(type="integer", nullable=true)
      */
-    //@TODO Doctrine bug: "protected" replaced with "public"
-    public $width;
+    protected $width;
 
     /**
      * ORM\Column(type="integer", nullable=true)
      */
-    //@TODO Doctrine bug: "protected" replaced with "public"
-    public $height;
-    
+    protected $height;
+
     /**
-     * 
+     *
      * @param OnlineResource $onlineResource onl
-     * @param int $width
-     * @param int $height
+     * @param int            $width
+     * @param int            $height
      */
     public function __construct($onlineResource = null, $width = null, $height = null)
     {
         $this->onlineResource = $onlineResource;
-        $this->width = $width;
-        $this->height = $height;
+        $this->width          = $width;
+        $this->height         = $height;
     }
 
     /**
@@ -56,7 +52,7 @@ class LegendUrl
     /**
      * Get onlineResource
      *
-     * @return OnlineResource 
+     * @return OnlineResource
      */
     public function getOnlineResource()
     {
@@ -79,7 +75,7 @@ class LegendUrl
     /**
      * Get width
      *
-     * @return integer 
+     * @return integer
      */
     public function getWidth()
     {
@@ -102,28 +98,34 @@ class LegendUrl
     /**
      * Get height
      *
-     * @return integer 
+     * @return integer
      */
     public function getHeight()
     {
         return $this->height;
     }
 
-    public static function create($width = null, $height = null,
-            $onlineResource = null)
+    /**
+     * @param int|null            $width  Width
+     * @param int|null            $height Height
+     * @param OnlineResource|null $onlineResource
+     * @return LegendUrl|null
+     */
+    public static function create(
+        $width = null,
+        $height = null,
+        $onlineResource = null)
     {
+        $lurl           = null;
         $onlineResource = $onlineResource === null ? OnlineResource::create() : $onlineResource;
-        if($onlineResource === null)
-        {
-            $lurl = null;
-        } else
-        {
+
+        if ($onlineResource !== null) {
             $lurl = new LegendUrl();
             $lurl->setWidth($width);
             $lurl->setHeight($height);
             $lurl->setOnlineResource($onlineResource);
         }
+
         return $lurl;
     }
-
 }
