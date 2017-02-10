@@ -2,13 +2,16 @@
 namespace Mapbender\WmcBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Mapbender\CoreBundle\Entity\Contact;
 use Mapbender\CoreBundle\Entity\State;
 use Mapbender\WmsBundle\Component\OnlineResource;
 use Mapbender\WmsBundle\Component\LegendUrl;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A Wmc entity presents an OGC WMC.
+ *
  * @ORM\Entity
  * @ORM\Table(name="mb_wmc_wmc")
  * ORM\DiscriminatorMap({"mb_wmc" = "Wmc"})
@@ -37,13 +40,14 @@ class Wmc
     /**
      * @ORM\OneToOne(targetEntity="Mapbender\CoreBundle\Entity\State", cascade={"persist","remove"})
      * @ORM\JoinColumn(name="state", referencedColumnName="id")
-     * */
+     * @var State
+     */
     protected $state;
 
     /**
      * @var array $keywords The keywords of the wmc
      * @ORM\Column(type="array",nullable=true)
-     * */
+     */
     protected $keywords = array();
 
     /**
@@ -53,13 +57,13 @@ class Wmc
     protected $abstract;
 
     /**
-     * @var string A description url
+     * @var LegendUrl Logo URL
      * @ORM\Column(type="object", nullable=true)
      */
     public $logourl;
 
     /**
-     * @var string A description url
+     * @var OnlineResource Description URL
      * @ORM\Column(type="object", nullable=true)
      */
     public $descriptionurl;
@@ -71,7 +75,7 @@ class Wmc
     private $screenshotPath;
 
     /**
-     * @var screenshot
+     * @var File
      * @Assert\File(maxSize="6000000")
      */
     private $screenshot;
@@ -83,13 +87,13 @@ class Wmc
     protected $contact;
 
     /**
-     * @var wmc document
+     * @var File document
      * @Assert\File(maxSize="6000000")
      */
     private $xml;
 
     /**
-     * @var document public
+     * @var boolean public
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $public = false;
@@ -98,7 +102,7 @@ class Wmc
      * Set id
      *
      * @param integer $id
-     * @return State
+     * @return $this
      */
     public function setId($id)
     {
@@ -116,23 +120,37 @@ class Wmc
         return $this->id;
     }
 
+    /**
+     * @param State $state
+     * @return $this
+     */
     public function setState($state)
     {
         $this->state = $state;
         return $this;
     }
 
+    /**
+     * @return State
+     */
     public function getState()
     {
         return $this->state;
     }
 
+    /**
+     * @param array $keywords
+     * @return $this
+     */
     public function setKeywords($keywords)
     {
         $this->keywords = $keywords;
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getKeywords()
     {
         return $this->keywords;
@@ -142,7 +160,7 @@ class Wmc
      * Set abstract
      *
      * @param string $abstract
-     * @return Source
+     * @return $this
      */
     public function setAbstract($abstract)
     {
@@ -153,7 +171,7 @@ class Wmc
     /**
      * Get abstract
      *
-     * @return string 
+     * @return string
      */
     public function getAbstract()
     {
@@ -175,7 +193,7 @@ class Wmc
     /**
      * Get logourl
      *
-     * @return LegendUrl 
+     * @return LegendUrl
      */
     public function getLogourl()
     {
@@ -197,7 +215,7 @@ class Wmc
     /**
      * Get descriptionurl
      *
-     * @return OnlineResource 
+     * @return OnlineResource
      */
     public function getDescriptionurl()
     {
@@ -205,10 +223,10 @@ class Wmc
     }
 
     /**
-     * Set screenshotPath
+     * Set screen shot path
      *
      * @param string $screenshotPath
-     * @return Source
+     * @return $this
      */
     public function setScreenshotPath($screenshotPath)
     {
@@ -219,7 +237,7 @@ class Wmc
     /**
      * Get screenshotPath
      *
-     * @return string 
+     * @return string
      */
     public function getScreenshotPath()
     {
@@ -228,10 +246,12 @@ class Wmc
 
     /**
      * @param string $screenshot
+     * @return $this
      */
     public function setScreenshot($screenshot)
     {
         $this->screenshot = $screenshot;
+        return $this;
     }
 
     /**
@@ -246,6 +266,7 @@ class Wmc
 
     /**
      * @param string $version
+     * @return $this
      */
     public function setVersion($version)
     {
@@ -265,6 +286,7 @@ class Wmc
 
     /**
      * @param string $wmcid
+     * @return $this
      */
     public function setWmcid($wmcid)
     {
@@ -276,7 +298,7 @@ class Wmc
      * Set contact
      *
      * @param string $contact
-     * @return WmsSource
+     * @return $this
      */
     public function setContact($contact)
     {
@@ -287,7 +309,7 @@ class Wmc
     /**
      * Get contact
      *
-     * @return string 
+     * @return string
      */
     public function getContact()
     {
@@ -296,10 +318,12 @@ class Wmc
 
     /**
      * @param string $xml
+     * @return $this
      */
     public function setXml($xml)
     {
         $this->xml = $xml;
+        return $this;
     }
 
     /**
@@ -326,6 +350,7 @@ class Wmc
      * Set public
      *
      * @param boolean $public
+     * @return $this
      */
     public function setPublic($public)
     {
@@ -337,26 +362,40 @@ class Wmc
      * Get public
      *
      * @param boolean
+     * @return bool
      */
     public function getPublic()
     {
         return $this->public;
     }
 
-    public static function create($state = null, $logoUrl = null,
+    /**
+     *
+     *
+     * @param State|null          $state
+     * @param LegendUrl|null      $logoUrl
+     * @param OnlineResource|null $descriptionUrl
+     * @return Wmc
+     */
+    public static function create(
+        $state = null,
+        $logoUrl = null,
         $descriptionUrl = null)
     {
-        $state = $state === null ? new State() : $state;
-        $wmc = new Wmc();
-        $wmc->setState($state);
-        $logoUrl = $logoUrl === null ? LegendUrl::create() : logoUrl;
-        if ($logoUrl !== null) {
+        $wmc            = new Wmc();
+        $descriptionUrl = $descriptionUrl ? $descriptionUrl : OnlineResource::create();
+        $logoUrl        = $logoUrl ? $logoUrl : LegendUrl::create();
+
+        $wmc->setState($state ? $state : new State());
+
+        if (!$logoUrl) {
             $wmc->setLogourl($logoUrl);
         }
-        $descriptionUrl = $descriptionUrl === null ? OnlineResource::create() : $descriptionUrl;
-        if ($descriptionUrl !== null) {
+
+        if (!$descriptionUrl) {
             $wmc->setDescriptionurl($descriptionUrl);
         }
+
         return $wmc;
     }
 
