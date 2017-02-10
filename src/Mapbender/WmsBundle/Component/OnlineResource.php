@@ -36,7 +36,7 @@ class OnlineResource
      * Set format
      *
      * @param string $format
-     * @return LegendUrl
+     * @return OnlineResource
      */
     public function setFormat($format)
     {
@@ -59,7 +59,7 @@ class OnlineResource
      * Set href
      *
      * @param string $href
-     * @return LegendUrl
+     * @return OnlineResource
      */
     public function setHref($href)
     {
@@ -78,6 +78,13 @@ class OnlineResource
         return $this->href;
     }
 
+    /**
+     * Create resource
+     *
+     * @param string|null $format
+     * @param string|null $href
+     * @return OnlineResource|null
+     */
     public static function create($format = null, $href = null)
     {
         if ($href === null) {
