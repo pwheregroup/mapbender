@@ -1,35 +1,98 @@
 (function($){
+
+    /**
+     * WMC Loader Element
+     *
+     * @author Paul Schmidt
+     * @author Andriy Oblivantsev
+     */
     $.widget("mapbender.mbWmcLoader", {
-        options: {},
+
+        options:    {},
         elementUrl: null,
-        popup: null,
-        _create: function(){
-            if(!Mapbender.checkTarget("mbWmcLoader", this.options.target)){
+        popup:      null,
+
+        _create: function() {
+            var widget = this;
+            var options = widget.options;
+            var target = options.target;
+
+            if(!Mapbender.checkTarget("mbWmcLoader", target)) {
                 return;
             }
-            var self = this;
-            Mapbender.elementRegistry.onElementReady(this.options.target, $.proxy(self._setup, self));
+
+            Mapbender.elementRegistry.onElementReady(target, $.proxy(widget._setup, widget));
         },
+
+        /**
+         * Is the element an component?
+         *
+         * @param name component name
+         * @returns bool
+         */
+        isComponent: function(name) {
+            var widget = this;
+            var options = widget.options;
+
+            return _.contains(options.components, "wmcidloader");
+        },
+
+        /**
+         * Is the id loader component?
+         * @returns bool
+         */
+        isIdLoaderComponent: function() {
+            return this.isComponent("wmcidloader");
+        },
+
+        /**
+         * Is the element list loader component?
+         * @returns bool
+         */
+        isListLoaderComponent: function() {
+            return this.isComponent("wmclistloader");
+        },
+
+        /**
+         * Is the element XML loader component?
+         * @returns bool
+         */
+        isXmlLoaderComponent: function() {
+            return this.isComponent("wmclistloader");
+        },
+
+        /**
+         * Is the element URL Loader component?
+         * @returns bool
+         */
+        isUrlLoaderComponent: function() {
+            return this.isComponent("wmclistloader");
+        },
+
         /**
          * Initializes the wmc handler
          */
-        _setup: function(){
-            this.elementUrl = Mapbender.configuration.application.urls.element + '/' + this.element.attr('id') + '/';
-            if(typeof this.options.load !== 'undefined'
-                && typeof this.options.load.wmcid !== 'undefined'){
-                var wmc_id = this.options.load.wmcid;
-                var map = $('#' + this.options.target).data('mapbenderMbMap');
+        _setup: function() {
+            var widget = this;
+            var options = widget.options;
+            var element = widget.element;
+            var map = $('#' + options.target).data('mapbenderMbMap');
+            var isLoadDefined = typeof loader !== 'undefined';
+            var elementUrl = widget.elementUrl = Mapbender.configuration.application.urls.element + '/' + element.attr('id') + '/';
+
+            if(isLoadDefined){
                 var wmcHandlier = new Mapbender.WmcHandler(map);
-                wmcHandlier.loadFromId(this.elementUrl + 'load', wmc_id);
-            } else if(typeof this.options.load !== 'undefined'
-                && typeof this.options.load.wmcurl !== 'undefined'){
-                var wmc_url = this.options.load.wmcurl;
-                var map = $('#' + this.options.target).data('mapbenderMbMap');
-                var wmcHandlier = new Mapbender.WmcHandler(map);
-                wmcHandlier.loadFromUrl(this.elementUrl + 'wmcfromurl', wmc_url);
+                var loader = options.load;
+
+                if(loader.wmcid) {
+                    wmcHandlier.loadFromId(elementUrl + 'load', loader.wmcid);
+                } else if(loader.wmcurl) {
+                    wmcHandlier.loadFromUrl(widget.elementUrl + 'wmcfromurl', loader.wmcurl);
+                }
             }
-            this._trigger('ready');
-            this._ready();
+
+            widget._trigger('ready');
+            widget._ready();
         },
         /**
          * Default action for mapbender element
@@ -37,76 +100,172 @@
         defaultAction: function(callback){
             this.open(callback);
         },
+
         /**
          * closes a dialog
          */
-        close: function(){
-            if(this.popup){
-                this.element.hide().appendTo($('body'));
-                if(this.popup.$element){
-                    this.popup.destroy();
+        close: function() {
+            var widget = this;
+
+            if(widget.popup) {
+                var element = widget.element;
+                element.hide().appendTo($('body'));
+                if(widget.popup.$element) {
+                    widget.popup.destroy();
                 }
-                this.popup = null;
+                widget.popup = null;
             }
-            this.callback ? this.callback.call() : this.callback = null;
+
+            widget.callback ? widget.callback.call() : widget.callback = null;
         },
+
+        /**
+         * Render WMC load table
+         *
+         * @param list
+         */
+        renderWmcTableView: function(list) {
+            var widget = this;
+            var table = $("<div class='wmc-list'/>").resultTable({
+                paging:    false,
+                info:      false,
+                width:     "100%", // autoWidth: true,
+                columns:   [{
+                    title: "ID",
+                    data:  function(wmc) {
+                        return wmc.id;
+                    }
+                }, {
+                    title: "Title",
+                    data:  function(wmc) {
+                        return wmc.state.title;
+                    }
+                }, {
+                    title: "Description",
+                    data:  function(wmc) {
+                        return wmc.abstract;
+                    }
+                }],
+                buttons:   [{
+                    title:     Mapbender.trans("mb.wmc.wmcloader.view_wmc"),
+                    className: 'iconView',
+                    onClick:   function(wmc, ui) {
+                        widget.loadFromId(wmc.id);
+                    }
+                }],
+                oLanguage: {
+                    sEmptyTable: Mapbender.trans("mb.wmc.wmcloader.no_wmc"),
+                    sInfo:       "_START_ / _END_ (_TOTAL_)"
+                }
+            });
+            // var tableWidget = table.data('visUiJsResultTable');
+            var tableApi = table.resultTable('getApi');
+
+            tableApi.clear();
+            tableApi.rows.add(list);
+            tableApi.draw();
+
+            return table;
+        },
+
+        /**
+         *
+         * @param uri
+         * @param parameters
+         * @returns {*}
+         */
+        query: function(uri, parameters, options) {
+            var widget = this;
+            return $.ajax(_.extend({
+                url:      widget.elementUrl + uri,
+                dataType: "json",
+                data:     parameters || {}
+            }, (options ? options : {})));
+        },
+
         /**
          * opens a dialog
          */
         open: function(callback){
-            this.callback = callback ? callback : null;
-            var self = this;
-            if(!this.popup || !this.popup.$element){
-                this.popup = new Mapbender.Popup2({
-                    title: self.element.attr('title'),
-                    draggable: true,
-                    resizable: true,
-                    modal: false,
-                    closeButton: false,
-                    closeOnESC: false,
-                    cssClass: 'mb-wmcEditor',
-                    content: [$.ajax({
-                            url: self.elementUrl + 'list',
-                            complete: function(data){
-                                $('.loadWmcId', self.popup.$element).on("click", $.proxy(self._loadFromId, self));
-                                $('.loadWmcXml', self.popup.$element).on("click", $.proxy(self._loadForm, self));
-                            }})],
+            var widget = this;
+            var element = widget.element;
+            var hasPopUp = widget.popup && widget.popup.$element;
+
+            widget.callback = callback ? callback : null;
+
+            if(hasPopUp) {
+                widget.popup.focus();
+                return;
+            }
+
+            widget.query('jsonList').done(function(r) {
+                var wmcList = r.list;
+                var container = $("<div/>");
+                var listTable = widget.renderWmcTableView(wmcList);
+
+                if(widget.isXmlLoaderComponent()) {
+                    // widget.elementUrl
+                    var title = Mapbender.trans('mb.wmc.wmcloader.load_xml_wmc');
+                    var loadXmlButton = $('<a href="' + widget.elementUrl + 'loadform' + '" class="iconAdd iconSmall loadWmcXml" title="' + title + '"/>');
+
+                    loadXmlButton.on("click", function(e) {
+                        widget._loadForm(e);
+                        return false;
+                    });
+
+                    container.append(loadXmlButton);
+                }
+
+                container.append(listTable);
+
+                var popup = widget.popup = new Mapbender.Popup2({
+                    title:          element.attr('title'),
+                    draggable:      true,
+                    resizable:      true,
+                    modal:          false,
+                    closeButton:    false,
+                    closeOnESC:     false,
+                    cssClass:       'mb-wmcEditor',
+                    content:        container,
                     destroyOnClose: true,
-                    width: 480,
-                    buttons: {
+                    height:         400,
+                    width:          480,
+                    buttons:        {
                         'cancel': {
-                            label: Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.cancel"),
+                            label:    Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.cancel"),
                             cssClass: 'button buttonCancel critical right',
-                            callback: function(){
-                                self.close();
+                            callback: function() {
+                                widget.close();
                             }
                         },
-                        'ok': {
-                            label: Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.ok"),
+                        'ok':     {
+                            label:    Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.ok"),
                             cssClass: 'button buttonYes right',
-                            callback: function(){
-                                $('#wmc-load input[type="submit"]', self.popup.$element).click();
+                            callback: function() {
+                                $('#wmc-load input[type="submit"]', widget.popup.$element).click();
                                 return false;
                             }
                         },
-                        'back': {
-                            label: Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.back"),
+                        'back':   {
+                            label:    Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.back"),
                             cssClass: 'button left buttonBack',
-                            callback: function(){
+                            callback: function() {
                                 $(".popupSubContent").remove();
                                 $(".popupSubTitle").text("");
-                                $(".popup", self.popup.$element).find(".buttonYes, .buttonBack").hide();
-                                $(".popupContent", self.popup.$element).show();
+                                $(".popup", widget.popup.$element).find(".buttonYes, .buttonBack").hide();
+                                $(".popupContent", widget.popup.$element).show();
                             }
                         }
                     }
                 });
-                this.popup.$element.on('close', $.proxy(this.close, this));
-                $(".popup", self.popup.$element).find(".buttonYes, .buttonBack").hide();
-            }else{
-                this.popup.open($.ajax({url: self.elementUrl + 'list'}));
-            }
+
+                popup.$element.on('close', $.proxy(widget.close, widget));
+                $(".popup", popup.$element).find(".buttonYes, .buttonBack").hide();
+            });
+
+
         },
+
         /**
          * Loads a wmc list
          */
@@ -117,50 +276,56 @@
                 type: "POST",
                 success: function(data){
                     $("#popupContent").html(data);
-                    $(".loadWmcId").on("click", $.proxy(self._loadFromId, self));
+                    // $(".loadWmcId").on("click", $.proxy(self._loadFromId, self));
                     $(".loadWmcXml").on("click", $.proxy(self._loadForm, self));
                 }
             });
         },
+
         /**
          * Loads a form to load a wmc
          */
-        _loadForm: function(e){
-            if(this.popup && this.popup.$element){
-                var self = this;
-                var url = $(e.target).attr("href");
-                if(url){
-                    $.ajax({
-                        url: url,
-                        type: "GET",
-                        complete: function(data){
-                            if(typeof data !== 'undefined'){
-                                var pop = $(".popup", self.popup.$element);
-                                var popupContent = $(".popupContent", self.popup.$element);
-                                var contentWrapper = pop.find(".contentWrapper");
+        _loadForm: function(e) {
+            var widget = this;
+            var hasPopUp = widget.popup && widget.popup.$element;
+            var url = $(e.target).attr("href");
 
-                                if(contentWrapper.get(0) == undefined){
-                                    popupContent.wrap('<div class="contentWrapper"></div>');
-                                    contentWrapper = pop.find(".contentWrapper");
-                                }
-                                popupContent.hide();
-                                var subContent = contentWrapper.find(".popupSubContent");
-
-                                if(subContent.get(0) == undefined){
-                                    contentWrapper.append('<div class="popupSubContent"></div>');
-                                    subContent = contentWrapper.find('.popupSubContent');
-                                }
-                                subContent.html(data.responseText);
-
-                                var subTitle = subContent.find("form").attr('title');
-                                $(".popupSubTitle").text(" - " + subTitle);
-                                $(".popup", self.popup.$element).find(".buttonYes, .buttonBack").show();
-                                self._ajaxForm();
-                            }
-                        }
-                    });
-                }
+            if(!hasPopUp || !url) {
+                return false;
             }
+
+            $.ajax({
+                url:      url,
+                type:     "GET",
+                complete: function(data) {
+                    if(typeof data !== 'undefined') {
+                        var popup = widget.popup;
+                        var popupElement = popup.$element;
+                        var pop = $(".popup", popupElement);
+                        var popupContent = $(".popupContent", popupElement);
+                        var contentWrapper = pop.find(".contentWrapper");
+
+                        if(contentWrapper.get(0) == undefined) {
+                            popupContent.wrap('<div class="contentWrapper"/>');
+                            contentWrapper = pop.find(".contentWrapper");
+                        }
+                        popupContent.hide();
+                        var subContent = contentWrapper.find(".popupSubContent");
+
+                        if(subContent.get(0) == undefined) {
+                            contentWrapper.append('<div class="popupSubContent"/>');
+                            subContent = contentWrapper.find('.popupSubContent');
+                        }
+                        subContent.html(data.responseText);
+
+                        var subTitle = subContent.find("form").attr('title');
+                        $(".popupSubTitle").text(" - " + subTitle);
+                        $(".popup", popupElement).find(".buttonYes, .buttonBack").show();
+                        widget._ajaxForm();
+                    }
+                }
+            });
+
             return false;
         },
         /**
@@ -204,6 +369,7 @@
                 });
             }
         },
+
         /**
          * Loads a wmc from id (event handler)
          */
@@ -211,6 +377,7 @@
             var wmc_id = $(e.target).parents('tr:first').attr('data-id');
             this.loadFromId(wmc_id);
         },
+
         /**
          * Loads a wmc from id
          */
@@ -221,6 +388,7 @@
                 keepSources: this.options.keepSources});
             wmcHandlier.loadFromId(this.elementUrl + 'load', wmc_id);
         },
+
         /**
          * Loads a wmc from id
          */
@@ -231,6 +399,7 @@
                 keepSources: this.options.keepSources});
             wmcHandlier.removeFromMap();
         },
+
         /**
          * Loads a wmc from id
          */
@@ -244,6 +413,7 @@
             form.submit();
             form.remove();
         },
+
         /**
          *
          */
@@ -254,6 +424,7 @@
                 this.readyCallbacks.push(callback);
             }
         },
+
         /**
          *
          */
