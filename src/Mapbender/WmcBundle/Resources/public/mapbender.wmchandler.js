@@ -6,7 +6,7 @@ Mapbender.WmcHandler = function(mapWidget, options){
     this.options = $.extend({}, {keepSources: 'no', keepExtent: false}, options);
 
     this.loadFromId = function(url, id){
-        $.ajax({
+        return $.ajax({
             url: url,
             type: 'POST',
             data: {_id: id},
@@ -16,8 +16,8 @@ Mapbender.WmcHandler = function(mapWidget, options){
             success: this._loadFromIdSuccess,
             error: this._loadError
         });
-        return false;
     };
+
     this.loadFromUrl = function(url, wmcurl){
         $.ajax({
             url: url,
