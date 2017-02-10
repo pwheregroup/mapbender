@@ -3,14 +3,18 @@
 namespace Mapbender\WmcBundle\Element;
 
 use Mapbender\CoreBundle\Component\Element;
+use Mapbender\CoreBundle\Entity\State;
 use Mapbender\WmcBundle\Component\WmcHandler;
 use Mapbender\WmcBundle\Component\WmcParser;
 use Mapbender\WmcBundle\Entity\Wmc;
 use Mapbender\WmcBundle\Form\Type\WmcLoadType;
 use OwsProxy3\CoreBundle\Component\CommonProxy;
 use OwsProxy3\CoreBundle\Component\ProxyQuery;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
+
 
 class WmcLoader extends Element
 {
@@ -125,6 +129,14 @@ class WmcLoader extends Element
         return $html;
     }
 
+    /**
+     * Handle element Ajax requests.
+     *
+     * Do your magic here.
+     *
+     * @param string $action The action to perform
+     * @return Response
+     */
     public function httpAction($action)
     {
         switch ($action) {
@@ -136,6 +148,9 @@ class WmcLoader extends Element
                 break;
             case 'list':
                 return $this->getWmcList();
+                break;
+            case 'jsonList':
+                return $this->getWmcJsonList();
                 break;
             case 'loadxml':
                 return $this->loadXml();
@@ -201,6 +216,58 @@ class WmcLoader extends Element
     }
 
     /**
+     * @return bool
+     */
+    public function isWmcListLoader()
+    {
+        $config = $this->getConfiguration();
+        return in_array("wmclistloader", $config['components']);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWmcIdLoader()
+    {
+        $config = $this->getConfiguration();
+        return in_array("wmcidloader", $config['components']);
+    }
+
+    /**
+     * Returns a Json encoded list of all wmc documents
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function getWmcJsonList()
+    {
+        if (!$this->isWmcIdLoader() && !$this->isWmcListLoader()) {
+            return new Response($this->trans("mb.wmc.error.wmclistloader_notallowed"));
+        }
+
+        $wmcHandler = new WmcHandler($this, $this->application, $this->container);
+        $wmcList    = $wmcHandler->getWmcList(true);
+        $list       = array();
+
+        /** @var Wmc $wmc */
+        /** @var State $state */
+        foreach ($wmcList as $wmc) {
+            if (!$wmc->getPublic()) {
+                continue;
+            }
+            $state  = $wmc->getState();
+            $list[] = array(
+                'id'       => $wmc->getId(),
+                'state'    => array(
+                    'title' => $state->getTitle()
+                ),
+                'abstract' => $wmc->getAbstract(),
+            );
+        }
+
+        return new JsonResponse(array('list' => $list));
+    }
+
+    /**
      * Returns a html encoded list of all wmc documents
      *
      * @return \Symfony\Component\HttpFoundation\Response
@@ -208,18 +275,19 @@ class WmcLoader extends Element
     protected function getWmcList()
     {
         $response = new Response();
-        $config = $this->getConfiguration();
-        if (in_array("wmcidloader", $config['components']) || in_array("wmclistloader", $config['components'])) {
-            $wmchandler = new WmcHandler($this, $this->application, $this->container);
-            $wmclist = $wmchandler->getWmcList(true);
+        $config   = $this->getConfiguration();
+
+        if (!$this->isWmcIdLoader() && !$this->isWmcListLoader()) {
+            $wmchandler   = new WmcHandler($this, $this->application, $this->container);
+            $wmclist      = $wmchandler->getWmcList(true);
             $responseBody = $this->container->get('templating')
                 ->render('MapbenderWmcBundle:Wmc:wmcloader-list.html.twig',
-                         array(
-                'application' => $this->application,
-                'configuration' => $config,
-                'id' => $this->getId(),
-                'wmclist' => $wmclist)
-            );
+                    array(
+                        'application'   => $this->application,
+                        'configuration' => $config,
+                        'id'            => $this->getId(),
+                        'wmclist'       => $wmclist)
+                );
             $response->setContent($responseBody);
             return $response;
         } else {
