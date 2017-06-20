@@ -371,7 +371,7 @@ class WmcLoader extends Element
         }
     }
 
-    protected function getWmcFromUrl($url)
+    protected function getWmcFromUrl($url = null)
     {
         $config = $this->getConfiguration();
         if (in_array("wmcurlloader", $config['components']) && $this->container->get('request')->get("_url", null)) {
