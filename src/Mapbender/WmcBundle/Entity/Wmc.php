@@ -11,7 +11,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A Wmc entity presents an OGC WMC.
- *
  * @ORM\Entity
  * @ORM\Table(name="mb_wmc_wmc")
  * ORM\DiscriminatorMap({"mb_wmc" = "Wmc"})
@@ -191,7 +190,7 @@ class Wmc
     }
 
     /**
-     * Get logourl
+     * Get logo URL
      *
      * @return LegendUrl
      */
@@ -201,14 +200,14 @@ class Wmc
     }
 
     /**
-     * Set descriptionurl
+     * Set description URL
      *
-     * @param OnlineResource $descriptionurl
+     * @param OnlineResource $descriptionURL
      * @return Wmc
      */
-    public function setDescriptionurl(OnlineResource $descriptionurl)
+    public function setDescriptionurl(OnlineResource $descriptionURL)
     {
-        $this->descriptionurl = $descriptionurl;
+        $this->descriptionurl = $descriptionURL;
         return $this;
     }
 
