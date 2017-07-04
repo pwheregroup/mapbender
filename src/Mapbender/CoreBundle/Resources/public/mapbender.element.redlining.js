@@ -6,7 +6,7 @@
             display_type: 'dialog',
             auto_activate: false,
             deactivate_on_close: true,
-            geometrytypes: ['point', 'line', 'polygon', 'rectangle', 'text'],
+            geometrytypes: ['point', 'line', 'polygon', 'rectangle', 'text','radius'],
             paintstyles: {
                 'strokeColor': '#ff0000',
                 'fillColor': '#ff0000',
@@ -179,6 +179,26 @@
                                 }
                             });
                     break;
+                case 'radius':
+                    $('#redlining-radius-wrapper', this.element).removeClass('hidden');
+                    var radius = $('input[name=label-radius]', this.element).val();
+                    this.activeControl = new OpenLayers.Control.DrawFeature(this.layer,
+                            OpenLayers.Handler.RegularPolygon, {
+                                handlerOptions: {
+                                    sides: 32,
+                                    radius: 100,
+                                    fixedRadius: false,
+                                    irregular: false,
+                                    persist: true
+                                },
+                                featureAdded: function(e){
+                                    rad = self._setFeatureRadius();
+                                    e.setOptions({radius: rad });
+                                    self._addToGeomList(e, Mapbender.trans('mb.core.redlining.geometrytype.radius'));
+                                    self.layer.redraw();
+                                }
+                            });
+                    break;                    
             }
             this.map.addControl(this.activeControl);
             this.activeControl.activate();
@@ -196,6 +216,7 @@
             }
             this._deactivateButton();
             $('#redlining-text-wrapper', this.element).addClass('hidden');
+            $('#redlining-radius-wrapper', this.element).addClass('hidden');
         },
         _deactivateButton: function(){
             $('.redlining-tool', this.element).removeClass('active');
@@ -260,6 +281,11 @@
             };
             return style;
         },
+        _setFeatureRadius: function(){
+            var style = OpenLayers.Util.applyDefaults(null, OpenLayers.Feature.Vector.style['default']);
+            var radiussize = $('input[name=label-radius]', this.element).val();
+            return radiussize;
+        },        
         /**
          *
          */

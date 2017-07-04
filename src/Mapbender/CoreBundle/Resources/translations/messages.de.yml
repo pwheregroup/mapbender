@@ -367,6 +367,10 @@ mb:
         text:
           title: Text
           label: Text
+        radius:
+          title: Radius
+          label: Radius         
+          info: Bitte geben Sie den gewünschten Radius an         
       geometry:
         action:
           remove: 'Entfernen der Geometrie'

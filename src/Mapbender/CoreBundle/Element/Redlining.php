@@ -68,7 +68,7 @@ class Redlining extends Element
             "display_type" => null,
             "auto_activate" => false,
             "deactivate_on_close" => true,
-            "geometrytypes" => array( "point", "line", "polygon", "text")
+            "geometrytypes" => array( "point", "line", "polygon", "text","radius")
         );
     }
 

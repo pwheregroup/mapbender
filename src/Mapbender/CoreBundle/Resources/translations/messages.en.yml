@@ -366,6 +366,10 @@ mb:
         text:
           title: Text
           label: Text
+        radius:
+          title: Radius
+          label: Radius              
+          info: Please define the radius for the circle       
       geometry:
         action:
           remove: 'Remove geometry'

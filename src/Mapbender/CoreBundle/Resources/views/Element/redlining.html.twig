@@ -1,6 +1,6 @@
 <div id="{{ id }}" class="mb-element mb-element-redlining hidden" data-title="{{ title|trans }}">
     {% if 'point' in configuration.geometrytypes %}
-        <input type="button" class="redlining-tool button" name="point" value="{{ "mb.core.redlining.geometrytype.point"|trans}}">
+        <input type="button" class="redlining-tool button mb-button iconBig" name="point" value="{{ "mb.core.redlining.geometrytype.point"|trans}}">
     {% endif %}
     {% if 'line' in configuration.geometrytypes %}
         <input type="button" class="redlining-tool button" name="line" value="{{ "mb.core.redlining.geometrytype.line"|trans}}">
@@ -13,6 +13,11 @@
     {% endif %}
     {% if 'text' in configuration.geometrytypes %}
         <input type="button" class="redlining-tool button" name="text" value="{{ "mb.core.redlining.geometrytype.text.label"|trans}}">
+    {% endif %}
+    {% if 'radius' in configuration.geometrytypes %}
+        <input type="button" class="redlining-tool button" name="radius" value="{{ "mb.core.redlining.geometrytype.radius.label"|trans}}">    
+    {% endif %}  
+    {% if 'text' in configuration.geometrytypes %}    
         <div id="redlining-text-wrapper" class="text-wrapper hidden">
             <label class="labelInput" for="loadWmsUrl">{{ "mb.core.redlining.geometrytype.text.label"|trans}}:</label>
             <div class="inputWrapper">
@@ -20,6 +25,14 @@
             </div>
         </div>
     {% endif %}
+    {% if 'radius' in configuration.geometrytypes %}
+        <div id="redlining-radius-wrapper" class="radius-wrapper hidden">
+            <label class="labelInput" for="loadWmsUrl">{{ "mb.core.redlining.geometrytype.radius.info"|trans}}:</label>
+            <div class="inputWrapper">
+                <input name="label-radius" class="input" type="text" />
+            </div>
+        </div>
+    {% endif %}    
     <table class="geometry-table">
         <tr class="geometry-item" data-id="">
             <td class="geometry-name"></td>

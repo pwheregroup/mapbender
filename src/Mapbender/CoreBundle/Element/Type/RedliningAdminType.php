@@ -53,6 +53,7 @@ class RedliningAdminType extends AbstractType
                     'line' => 'Line',
                     'polygon' => 'Polygon',
                     'rectangle' => 'Rectangle',
-                    'text' => 'Text')));
+                    'text' => 'Text',
+                    'radius' => 'Radius')));
     }
 }
