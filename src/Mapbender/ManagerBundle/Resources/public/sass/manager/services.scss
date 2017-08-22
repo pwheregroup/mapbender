@@ -180,8 +180,8 @@
       .collectionItem > label{display:none;}
       a.collectionRemove {
           position: relative;
-          top: -191px;
-          right: -290px;
+          top: -190px;
+          right: -272px;
       }
     }
     .mb-slider{margin-top: $space/2;}
@@ -203,7 +203,26 @@
   .checkboxColumn{text-align:center;}
   .odd{background-color:darken($contentColor, 6%);}
 
-  thead .checkboxColumn{padding:0px;}
+  &.table {
+    > thead > tr > .checkboxColumn {
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    > tbody > tr > td {
+      &.titleColumn {
+        width: 260px;
+      }
+      &.itemType {
+        padding-right: 0;
+        padding-left: 0;
+      }
+      &.minScaleColumn,
+      &.maxScaleColumn {
+        padding-left: 4px;
+      }
+    }
+  }
+
   tbody{
     .dropdown{min-width:100%;}
     .minScaleColumn, .maxScaleColumn, .styleColumn{width:80px;}

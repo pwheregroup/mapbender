@@ -8,6 +8,7 @@ mb:
       popup:
         btn:
           ok: Cerrar
+          print: Imprimir
       class:
         title: FeatureInfo
         description: FeatureInfo
@@ -381,4 +382,3 @@ mb:
       datails: 'El mapa no puede ser presentado.'
       exception: 'Excepción: %exception%'
       statuscode: 'HTTP código de estado'
-Search: Buscar

@@ -8,6 +8,7 @@ mb:
       popup:
         btn:
           ok: Закрыть
+          print: Печать
       class:
         title: Инфосвойства
         description: Инфосвойства
@@ -380,4 +381,3 @@ mb:
       datails: 'Карта не отображается'
       exception: 'Ошибка: %exception%'
       statuscode: HTTP-Код
-Search: Поиск

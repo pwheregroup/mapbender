@@ -1,42 +1,39 @@
 <?php
-
 namespace Mapbender\WmsBundle\Component;
 
 /**
- * LegendUrl class.
+ * OnlineResource class.
+ *
  * @author Paul Schmidt
  */
 class OnlineResource
 {
-
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    //@TODO Doctrine bug: "protected" replaced with "public"
     public $format;
 
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    //@TODO Doctrine bug: "protected" replaced with "public"
     public $href;
 
     /**
-     * 
+     *
      * @param string $format
      * @param string $href
      */
-    public function __cunstruct($format = null, $href = null)
+    public function __construct($format = null, $href = null)
     {
         $this->format = $format;
-        $this->href = $href;
+        $this->href   = $href;
     }
 
     /**
      * Set format
      *
      * @param string $format
-     * @return OnlineResource
+     * @return $this
      */
     public function setFormat($format)
     {
@@ -48,7 +45,7 @@ class OnlineResource
     /**
      * Get format
      *
-     * @return string 
+     * @return string
      */
     public function getFormat()
     {
@@ -59,7 +56,7 @@ class OnlineResource
      * Set href
      *
      * @param string $href
-     * @return OnlineResource
+     * @return $this
      */
     public function setHref($href)
     {
@@ -71,7 +68,7 @@ class OnlineResource
     /**
      * Get href
      *
-     * @return string 
+     * @return string
      */
     public function getHref()
     {
@@ -79,10 +76,11 @@ class OnlineResource
     }
 
     /**
-     * Create resource
+     * Create online resource
+     * #
      *
-     * @param string|null $format
-     * @param string|null $href
+     * @param null $format
+     * @param null $href
      * @return OnlineResource|null
      */
     public static function create($format = null, $href = null)
