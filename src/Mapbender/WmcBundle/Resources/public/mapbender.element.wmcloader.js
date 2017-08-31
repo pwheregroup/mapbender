@@ -77,13 +77,12 @@
             var options = widget.options;
             var element = widget.element;
             var map = $('#' + options.target).data('mapbenderMbMap');
+            var loader = options.load;
             var isLoadDefined = typeof loader !== 'undefined';
             var elementUrl = widget.elementUrl = Mapbender.configuration.application.urls.element + '/' + element.attr('id') + '/';
 
             if(isLoadDefined){
                 var wmcHandlier = new Mapbender.WmcHandler(map);
-                var loader = options.load;
-
                 if(loader.wmcid) {
                     wmcHandlier.loadFromId(elementUrl + 'load', loader.wmcid);
                 } else if(loader.wmcurl) {
