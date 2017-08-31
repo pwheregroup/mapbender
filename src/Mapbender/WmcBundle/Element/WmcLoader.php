@@ -54,6 +54,8 @@ class WmcLoader extends Element
             "components" => array(),
             "keepSources" => 'no',
             "keepExtent" => false,
+            "width" =>  480,
+            "height"=> 400
         );
     }
 

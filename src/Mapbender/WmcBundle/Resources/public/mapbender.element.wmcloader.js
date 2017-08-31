@@ -8,7 +8,10 @@
      */
     $.widget("mapbender.mbWmcLoader", {
 
-        options:    {},
+        options:    {
+            width:  480,
+            height: 400
+        },
         elementUrl: null,
         popup:      null,
 
@@ -21,6 +24,7 @@
                 return;
             }
 
+            debugger;
             Mapbender.elementRegistry.onElementReady(target, $.proxy(widget._setup, widget));
         },
 
@@ -188,6 +192,7 @@
         open: function(callback){
             var widget = this;
             var element = widget.element;
+            var options = widget.options;
             var hasPopUp = widget.popup && widget.popup.$element;
 
             widget.callback = callback ? callback : null;
@@ -227,8 +232,8 @@
                     cssClass:       'mb-wmcEditor',
                     content:        container,
                     destroyOnClose: true,
-                    height:         400,
-                    width:          480,
+                    height:         options.height,
+                    width:          options.width,
                     buttons:        {
                         'cancel': {
                             label:    Mapbender.trans("mb.wmc.element.wmcloader.popup.btn.cancel"),
