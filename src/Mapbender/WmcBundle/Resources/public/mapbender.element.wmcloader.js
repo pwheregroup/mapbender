@@ -24,7 +24,6 @@
                 return;
             }
 
-            debugger;
             Mapbender.elementRegistry.onElementReady(target, $.proxy(widget._setup, widget));
         },
 
