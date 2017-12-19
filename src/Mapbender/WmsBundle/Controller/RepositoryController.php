@@ -9,13 +9,15 @@ use Mapbender\WmsBundle\Component\Wms\Importer;
 use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
 use Mapbender\WmsBundle\Component\WmsSourceEntityHandler;
 use Mapbender\WmsBundle\Entity\WmsOrigin;
+use Mapbender\CoreBundle\Entity\SourceInstance;
+use Mapbender\WmsBundle\Entity\WmsInstance;
+use Mapbender\WmsBundle\Entity\WmsInstanceLayer;
 use Mapbender\WmsBundle\Entity\WmsSource;
 use Mapbender\WmsBundle\Form\Type\WmsInstanceInstanceLayersType;
 use Mapbender\WmsBundle\Form\Type\WmsSourceSimpleType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Symfony\Component\Security\Acl\Domain\UserSecurityIdentity;
@@ -38,7 +40,7 @@ class RepositoryController extends Controller
      */
     public function newAction()
     {
-        $form = $this->get("form.factory")->create(new WmsSourceSimpleType(), new WmsSource());
+        $form = $this->createForm(new WmsSourceSimpleType(), new WmsSource());
         return array(
             "form" => $form->createView()
         );
@@ -51,7 +53,7 @@ class RepositoryController extends Controller
      */
     public function startAction()
     {
-        $form = $this->get("form.factory")->create(new WmsSourceSimpleType(), new WmsSource());
+        $form = $this->createForm(new WmsSourceSimpleType(), new WmsSource());
         return array(
             "form" => $form->createView()
         );
@@ -88,9 +90,8 @@ class RepositoryController extends Controller
             throw new AccessDeniedException();
         }
 
-        /** @var FormInterface $form */
-        $form      = $this->get("form.factory")->create(new WmsSourceSimpleType(), $wmssource_req);
-        $form->submit($request);
+        $form      = $this->createForm(new WmsSourceSimpleType(), $wmssource_req);
+        $form->bind($request);
         $onlyvalid = $form->get('onlyvalid')->getData();
         if ($form->isValid()) {
             $importer = new Importer($this->container);
@@ -152,7 +153,7 @@ class RepositoryController extends Controller
             throw new AccessDeniedException();
         }
 
-        $form = $this->get("form.factory")->create(new WmsSourceSimpleType(), $source);
+        $form = $this->createForm(new WmsSourceSimpleType(), $source);
         return array(
             "form" => $form->createView()
         );
@@ -175,8 +176,7 @@ class RepositoryController extends Controller
         }
         if ($this->getRequest()->getMethod() === 'POST') { // check form and redirect to update
             $wmssource_req = new WmsSource();
-            /** @var FormInterface $form */
-            $form          = $this->get("form.factory")->create(new WmsSourceSimpleType(), $wmssource_req);
+            $form          = $this->createForm(new WmsSourceSimpleType(), $wmssource_req);
             $form->submit($request);
             if ($form->isValid()) {
                 $importer = new Importer($this->container);
@@ -240,7 +240,7 @@ class RepositoryController extends Controller
                 );
             }
         } else { // create form for update
-            $form = $this->get("form.factory")->create(new WmsSourceSimpleType(), $wmsOrig);
+            $form = $this->createForm(new WmsSourceSimpleType(), $wmsOrig);
             return array(
                 "form" => $form->createView()
             );
@@ -307,6 +307,7 @@ class RepositoryController extends Controller
     public function instanceAction($slug, $instanceId)
     {
         $repositoryName = "MapbenderWmsBundle:WmsInstance";
+        /** @var WmsInstance|null $wmsinstance */
         $wmsinstance = $this->loadEntityByPk($repositoryName, $instanceId);
 
         if ($this->getRequest()->getMethod() == 'POST') { //save
@@ -324,6 +325,7 @@ class RepositoryController extends Controller
                 $em->flush();
                 $em->getConnection()->commit();
                 // reload instance after saving ... why?
+                /** @var WmsInstance $wmsinstance */
                 $wmsinstance = $this->loadEntityByPk($repositoryName, $wmsinstance->getId());
                 $entityHandler = new WmsInstanceEntityHandler($this->container, $wmsinstance);
                 $entityHandler->generateConfiguration();
@@ -366,6 +368,7 @@ class RepositoryController extends Controller
     public function instanceLayerPriorityAction($slug, $instanceId, $instLayerId)
     {
         $number  = $this->get("request")->get("number");
+        /** @var WmsInstanceLayer|null $instLay */
         $instLay = $this->loadEntityByPk('MapbenderWmsBundle:WmsInstanceLayer', $instLayerId);
 
         if (!$instLay) {
@@ -387,6 +390,7 @@ class RepositoryController extends Controller
             "SELECT il FROM MapbenderWmsBundle:WmsInstanceLayer il  WHERE il.wmsinstance=:wmsi ORDER BY il.priority ASC"
         );
         $query->setParameters(array("wmsi" => $instanceId));
+        /** @var WmsInstanceLayer[] $instList */
         $instList = $query->getResult();
 
         $num = 0;
@@ -466,7 +470,7 @@ class RepositoryController extends Controller
     public function metadataAction()
     {
         $sourceId        = $this->container->get('request')->get("sourceId", null);
-
+        /** @var SourceInstance|null $instance */
         $instance        = $this->loadEntityByPk('Mapbender\CoreBundle\Entity\SourceInstance', $sourceId);
         $securityContext = $this->get('security.context');
         $oid             = new ObjectIdentity('class', 'Mapbender\CoreBundle\Entity\Application');
@@ -490,7 +494,7 @@ class RepositoryController extends Controller
         $wmsWithSameTitle = $this->getDoctrine()
             ->getManager()
             ->getRepository("MapbenderWmsBundle:WmsSource")
-            ->findBy(array('title' => $wmsSource->getTitle());
+            ->findBy(array('title' => $wmsSource->getTitle()));
 
         if (count($wmsWithSameTitle) > 0) {
             $wmsSource->setAlias(count($wmsWithSameTitle));
