@@ -257,7 +257,7 @@ class RepositoryController extends Controller
     {
         $wmssource    = $this->loadEntityByPk("MapbenderWmsBundle:WmsSource", $sourceId);
         $wmsinstances = $this->getRepository("MapbenderWmsBundle:WmsInstance")
-            ->findBySource($sourceId);
+            ->findBy(array('source' => $sourceId));
         $em           = $this->getDoctrine()->getManager();
         $em->getConnection()->beginTransaction();
 
@@ -490,7 +490,7 @@ class RepositoryController extends Controller
         $wmsWithSameTitle = $this->getDoctrine()
             ->getManager()
             ->getRepository("MapbenderWmsBundle:WmsSource")
-            ->findByTitle($wmsSource->getTitle());
+            ->findBy(array('title' => $wmsSource->getTitle());
 
         if (count($wmsWithSameTitle) > 0) {
             $wmsSource->setAlias(count($wmsWithSameTitle));
