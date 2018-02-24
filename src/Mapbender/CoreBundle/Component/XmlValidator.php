@@ -7,6 +7,7 @@ use OwsProxy3\CoreBundle\Component\CommonProxy;
 use OwsProxy3\CoreBundle\Component\ProxyQuery;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Kernel;
 
 /**
  * XmlValidator class to validate xml documents.
@@ -34,6 +35,11 @@ class XmlValidator
     protected $schemaDownloadDir = null;
 
     /**
+     * @var string private subdirectory in /tmp
+     */
+    protected $tempDir = null;
+
+    /**
      *
      * @var array temp files to delete
      */
@@ -47,9 +53,14 @@ class XmlValidator
     public function __construct(ContainerInterface $container)
     {
         $this->container     = $container;
-        $shippingRoot = $this->container->get('kernel')->getRootDir() . '/../web/xmlschemas';
+        /** @var Kernel $kernel */
+        $kernel = $this->container->get('kernel');
+        $shippingRoot = $kernel->getRootDir() . '/../web/xmlschemas';
         $this->shippingSchemaDir = $this->ensureDirectory($this->normalizePath($shippingRoot));
-        $this->schemaDownloadDir = $this->ensureDirectory(sys_get_temp_dir() . '/mapbender/xmlvalidator');
+        $commonStoragePath = '/mapbender/xmlvalidator';
+        $baseCacheDir = $kernel->getCacheDir();
+        $this->tempDir = $this->ensureDirectory(sys_get_temp_dir() . $commonStoragePath);
+        $this->schemaDownloadDir = $this->ensureDirectory("{$baseCacheDir}/mapbender/xmlvalidator");
         $this->filesToDelete = array();
     }
 
@@ -86,7 +97,7 @@ class XmlValidator
     protected function validateDtd(\DOMDocument $doc)
     {
         $docH = new \DOMDocument();
-        $filePath = $this->ensureLocalSchema($doc->doctype->name, $doc->doctype->systemId);
+        $filePath = $this->ensureLocalSchema($doc->doctype->name, $doc->doctype->systemId, true);
         $docStr = str_replace($doc->doctype->systemId, $this->addFileSchema($filePath), $doc->saveXML());
         $doc->loadXML($docStr);
         unset($docStr);
@@ -260,9 +271,10 @@ EOF
      *
      * @param string $ns namespace
      * @param string $url url
+     * @param bool $cachable
      * @return string filename from a namespace and a url
      */
-    private function getFileName($ns, $url)
+    private function getFileName($ns, $url, $cachable = true)
     {
         $urlArr = parse_url($url);
         if (!isset($urlArr['host'])) {
@@ -279,9 +291,15 @@ EOF
         if ($shippingPath && file_exists($shippingPath)) {
             return $shippingPath;
         } else {
-            $downloadPath = $this->schemaDownloadDir . "/{$path}";
-            // this file needs to be cleaned up later
-            $this->filesToDelete[] = $downloadPath;
+            // avoid caching requests with query parameters (e.g. REQUEST=GetSchemaExtension
+            $cachable = $cachable && (false === strpos($url, '?'));
+            if ($cachable) {
+                $downloadPath = $this->schemaDownloadDir . "/{$path}";
+            } else {
+                $downloadPath = $this->tempDir . "/{$path}";
+                // this file needs to be cleaned up later
+                $this->filesToDelete[] = $downloadPath;
+            }
             return $downloadPath;
         }
     }
@@ -350,12 +368,13 @@ EOF
      *
      * @param string $namespace
      * @param string $url url
+     * @param bool $cachable
      * @return string file path
      * @throws \Exception on failure
      */
-    protected function ensureLocalSchema($namespace, $url)
+    protected function ensureLocalSchema($namespace, $url, $cachable = true)
     {
-        $localPath = $this->getFileName($namespace, $url);
+        $localPath = $this->getFileName($namespace, $url, $cachable);
         if (!is_file($localPath)) {
             $schemaBody = $this->download($url);
             $this->ensureDirectory(dirname($localPath));
