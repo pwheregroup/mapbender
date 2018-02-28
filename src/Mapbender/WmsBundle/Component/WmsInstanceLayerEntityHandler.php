@@ -245,20 +245,10 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
         $srses = array();
         $llbbox = $this->entity->getSourceItem()->getLatlonBounds();
         if ($llbbox !== null) {
-            $srses[$llbbox->getSrs()] = array(
-                floatval($llbbox->getMinx()),
-                floatval($llbbox->getMiny()),
-                floatval($llbbox->getMaxx()),
-                floatval($llbbox->getMaxy())
-            );
+            $srses[$llbbox->getSrs()] = $llbbox->toCoordsArray();
         }
         foreach ($this->entity->getSourceItem()->getBoundingBoxes() as $bbox) {
-            $srses[$bbox->getSrs()] = array(
-                floatval($bbox->getMinx()),
-                floatval($bbox->getMiny()),
-                floatval($bbox->getMaxx()),
-                floatval($bbox->getMaxy())
-            );
+            $srses[$bbox->getSrs()] = $bbox->toCoordsArray();
         }
         $configuration['bbox'] = $srses;
         $legendConfig = $this->getLegendConfig($this->entity);
