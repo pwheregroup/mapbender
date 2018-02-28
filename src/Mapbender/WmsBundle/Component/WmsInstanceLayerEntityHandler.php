@@ -33,7 +33,7 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
     public function create(SourceInstance $instance, SourceItem $layerSource, $num = 0)
     {
         $instanceLayer = $this->entity;
-        $this->populateFromSourceInstance($instanceLayer, $instance, $layerSource, $num);
+        $this->populateFromSource($instanceLayer, $instance, $layerSource, $num);
         return $this->entity;
     }
 
