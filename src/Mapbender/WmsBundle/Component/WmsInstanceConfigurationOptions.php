@@ -416,6 +416,13 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
             ->setVersion($instance->getSource()->getVersion())
             ->setExceptionformat($instance->getExceptionformat());
 
+        $rootLayer = $instance->getRootlayer();
+        $boundingBoxMap = array();
+        foreach ($rootLayer->getSourceItem()->getMergedBoundingBoxes() as $bbox) {
+            $boundingBoxMap[$bbox->getSrs()] = $bbox->toCoordsArray();
+        }
+        $ico->setBbox($boundingBoxMap);
+
         return $ico;
     }
 }

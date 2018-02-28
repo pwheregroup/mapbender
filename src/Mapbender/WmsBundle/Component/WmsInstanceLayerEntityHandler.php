@@ -231,23 +231,21 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
      */
     public function getConfiguration()
     {
+        $sourceItem = $this->entity->getSourceItem();
         $configuration = array(
             "id" => strval($this->entity->getId()),
             "priority" => $this->entity->getPriority(),
-            "name" => $this->entity->getSourceItem()->getName() !== null ?
-                $this->entity->getSourceItem()->getName() : "",
+            "name" => $sourceItem->getName() !== null ?
+                $sourceItem->getName() : "",
             "title" => $this->entity->getTitle(),
             "queryable" => $this->entity->getInfo(),
             "style" => $this->entity->getStyle(),
             "minScale" => $this->entity->getMinScale() !== null ? floatval($this->entity->getMinScale()) : null,
             "maxScale" => $this->entity->getMaxScale() !== null ? floatval($this->entity->getMaxScale()) : null
         );
+        ;
         $srses = array();
-        $llbbox = $this->entity->getSourceItem()->getLatlonBounds();
-        if ($llbbox !== null) {
-            $srses[$llbbox->getSrs()] = $llbbox->toCoordsArray();
-        }
-        foreach ($this->entity->getSourceItem()->getBoundingBoxes() as $bbox) {
+        foreach ($sourceItem->getMergedBoundingBoxes() as $bbox) {
             $srses[$bbox->getSrs()] = $bbox->toCoordsArray();
         }
         $configuration['bbox'] = $srses;

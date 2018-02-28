@@ -306,19 +306,12 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      */
     public function generateConfiguration()
     {
-        $rootlayer = $this->entity->getRootlayer();
-        $srses = array();
-        foreach ($this->extractBoundingBoxes($rootlayer) as $bbox) {
-            $srses[$bbox->getSrs()] = $bbox->toCoordsArray();
-        }
         $wmsconf = new WmsInstanceConfiguration();
         $wmsconf->setType(strtolower($this->entity->getType()));
         $wmsconf->setTitle($this->entity->getTitle());
         $wmsconf->setIsBaseSource($this->entity->isBasesource());
 
         $options    = WmsInstanceConfigurationOptions::fromEntity($this->entity);
-
-        $options->setBbox($srses);
 
         $wmsconf->setOptions($options);
         $persistableConfig = $wmsconf->toArray();
