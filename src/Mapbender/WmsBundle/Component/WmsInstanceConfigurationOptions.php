@@ -384,4 +384,13 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
             'dimensions' => null,
         );
     }
+
+    protected static function keyToAttributeMapping()
+    {
+        // remap our two "danger zone" keys
+        return array(
+            'exception_format' => 'exceptionformat',
+            'info_format' => 'infoformat',
+        );
+    }
 }

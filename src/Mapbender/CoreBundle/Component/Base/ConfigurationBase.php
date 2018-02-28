@@ -64,8 +64,26 @@ abstract class ConfigurationBase implements ConfigurationBaseInterface
                 throw new \RuntimeException($message);
             }
         }
+        $remap = $this->keyToAttributeMapping();
+        foreach ($remap as $arrayKey =>  $attributeName) {
+            if (isset($options[$arrayKey])) {
+                $options[$attributeName] = $options[$arrayKey];
+                unset($options[$arrayKey]);
+            }
+        }
         foreach ($mergedOptions as $key => $value) {
             $this->{$key} = $value;
         }
+    }
+
+    /**
+     * Child classes should override this if attribute names diverge from keys used in array representations.
+     * Return a mapping of arrayKey => attributeName
+     *
+     * @return string[]
+     */
+    protected static function keyToAttributeMapping()
+    {
+        return array();
     }
 }
