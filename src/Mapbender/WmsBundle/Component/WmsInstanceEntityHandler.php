@@ -23,6 +23,9 @@ use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
 {
     /**
+     * Populates bound instance with array values. Used exclusively by
+     * ApplicationYAMLMapper ..?
+     *
      * @param array $configuration
      * @return WmsInstance
      */
@@ -121,33 +124,51 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         return $this->entity;
     }
 
+    public static function entityFactory(WmsSource $source)
+    {
+        $instance = new WmsInstance();
+        $instance->setSource($source);
+        // we only need to split here to remain compatible with the old
+        // `create` API
+        static::populateFromSource($instance, $source);
+        return $instance;
+    }
+
     /**
-     * Copies attributes from bound instance's source to the bound instance
+     * Copies attributes from bound instance's source to the bound instance.
+     * I.e. does not work until you have called ->setSource on the WmsInstance yourself.
      * @deprecated
-     * @inheritdoc
      */
     public function create()
     {
-        $this->entity->setTitle($this->entity->getSource()->getTitle());
-        $source = $this->entity->getSource();
-        $this->entity->setFormat(ArrayUtil::getValueFromArray($source->getGetMap()->getFormats(), null, 0));
-        $this->entity->setInfoformat(
+        $this->populateFromSource($this->entity, $this->entity->getSource());
+    }
+
+    /**
+     * @param WmsInstance $target
+     * @param WmsSource $source
+     */
+    protected static function populateFromSource(WmsInstance $target, WmsSource $source)
+    {
+        $target->setTitle($source->getTitle());
+        $target->setFormat(ArrayUtil::getValueFromArray($source->getGetMap()->getFormats(), null, 0));
+        $target->setInfoformat(
             ArrayUtil::getValueFromArray(
                 $source->getGetFeatureInfo() ? $source->getGetFeatureInfo()->getFormats() : array(),
                 null,
                 0
             )
         );
-        $this->entity->setExceptionformat(ArrayUtil::getValueFromArray($source->getExceptionFormats(), null, 0));
+        $target->setExceptionformat(ArrayUtil::getValueFromArray($source->getExceptionFormats(), null, 0));
 
-        $dimensions = $this->getDimensionInst();
-        $this->entity->setDimensions($dimensions);
+        $dimensions = static::getLayerDimensionInstances($source->getLayers());
+        $target->setDimensions($dimensions);
 
-        $this->entity->setWeight(-1);
-        $wmslayer_root = $this->entity->getSource()->getRootlayer();
+        $target->setWeight(-1);
+        $wmslayer_root = $target->getSource()->getRootlayer();
 
         // ??? @todo: return value is not used, does this implicitly modify one of the passed entities...?
-        WmsInstanceLayerEntityHandler::entityFactory($this->entity, $wmslayer_root);
+        WmsInstanceLayerEntityHandler::entityFactory($target, $wmslayer_root);
     }
 
     /**
@@ -208,7 +229,8 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         $this->entity->setExceptionformat(
             ArrayUtil::getValueFromArray($source->getExceptionFormats(), $this->entity->getExceptionformat(), 0)
         );
-        $dimensions = $this->updateDimension($this->entity->getDimensions(), $this->getDimensionInst());
+        $layerDimensionInsts = $this->getLayerDimensionInstances($source->getLayers());
+        $dimensions = $this->updateDimension($this->entity->getDimensions(), $layerDimensionInsts);
         $this->entity->setDimensions($dimensions);
 
         # TODO vendorspecific for layer specific parameters
@@ -223,11 +245,11 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     }
 
     /**
-     * Creates DimensionInst object
+     * Creates DimensionInst object, copies attributes from given Dimension object
      * @param \Mapbender\WmsBundle\Component\Dimension $dim
      * @return \Mapbender\WmsBundle\Component\DimensionInst
      */
-    public function createDimensionInst(Dimension $dim)
+    public static function createDimensionInst(Dimension $dim)
     {
         $diminst = new DimensionInst();
         $diminst->setCurrent($dim->getCurrent());
@@ -382,14 +404,16 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     }
 
     /**
+     * @param WmsLayerSource[]
      * @return array
      */
-    private function getDimensionInst()
+    private static function getLayerDimensionInstances($layers)
     {
         $dimensions = array();
-        foreach ($this->entity->getSource()->getLayers() as $layer) {
+        foreach ($layers as $layer) {
+            /** @var WmsLayerSource $layer */
             foreach ($layer->getDimension() as $dimension) {
-                $dim = $this->createDimensionInst($dimension);
+                $dim = static::createDimensionInst($dimension);
                 if (!in_array($dim, $dimensions)) {
                     $dimensions[] = $dim;
                 }
