@@ -4,6 +4,7 @@ namespace Mapbender\WmsBundle\Component;
 
 use Mapbender\CoreBundle\Component\InstanceConfiguration;
 use Mapbender\CoreBundle\Component\InstanceConfigurationOptions;
+use Mapbender\WmsBundle\Entity\WmsInstance;
 
 /**
  * Description of WmsInstanceConfiguration
@@ -72,27 +73,18 @@ class WmsInstanceConfiguration extends InstanceConfiguration
     }
 
     /**
-     * @inheritdoc
+     * @param WmsInstance $instance
+     * @param bool $strict
+     * @return null|static
      */
-    public static function fromArray($options)
+    public static function fromEntity(WmsInstance $instance, $strict = true)
     {
-        $ic = null;
-        if ($options && is_array($options)) {
-            $ic = new WmsInstanceConfiguration();
-            if (isset($options['type'])) {
-                $ic->type = $options['type'];
-            }
-            if (isset($options['title'])) {
-                $ic->title = $options['title'];
-            }
-            if (isset($options['isBaseSource'])) {
-                $ic->isBaseSource = $options['isBaseSource'];
-            }
-            if (isset($options['options'])) {
-                $ic->options = WmsInstanceConfigurationOptions::fromArray($options['options']);
-            }
-        }
-        return $ic;
+        $options = array(
+            'type' => strtolower($instance->getType()),
+            'title' => $instance->getTitle(),
+            'isBaseSource' => $instance->isBaseSource(),
+            'options' => WmsInstanceConfigurationOptions::fromEntity($instance),
+        );
+        return static::fromArray($options, $strict);
     }
-
 }

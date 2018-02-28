@@ -1,6 +1,7 @@
 <?php
 namespace Mapbender\CoreBundle\Component;
 
+use Mapbender\CoreBundle\Component\Base\ConfigurationBase;
 use Mapbender\WmsBundle\Component\WmsInstanceConfiguration;
 
 /**
@@ -8,7 +9,7 @@ use Mapbender\WmsBundle\Component\WmsInstanceConfiguration;
  *
  * @author Paul Schmidt
  */
-abstract class InstanceConfiguration
+abstract class InstanceConfiguration extends ConfigurationBase
 {
     /**
      * ORM\Column(type="string", nullable=true)
@@ -144,28 +145,17 @@ abstract class InstanceConfiguration
     public abstract function getChildren();
     
     /**
-     * Returns InstanceConfiguration as array
-     * 
-     * @return array
+     * @inheritdoc
      */
-    public abstract function toArray();
-    
-    /**
-     * Creates an InstanceConfiguration from options
-     * 
-     * @param array $options array with options
-     * @return InstanceConfiguration
-     */
-    public static function fromArray($options)
+    public static function defaults()
     {
-        if($options && is_array($options))
-        {
-            if(isset($options['type']) && $options['type'] === 'wms'){
-                return WmsInstanceConfiguration::fromArray($options);
-            }
-        }
-        return null;
+        return array(
+            'type' => null,
+            'title' => null,
+            'options' => array(),
+            'children' => array(),
+            'isBaseSource' => true,
+        );
     }
-
 }
 
