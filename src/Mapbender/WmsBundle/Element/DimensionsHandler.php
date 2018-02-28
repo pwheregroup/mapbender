@@ -4,6 +4,10 @@ namespace Mapbender\WmsBundle\Element;
 
 use Mapbender\CoreBundle\Component\Element;
 use Mapbender\CoreBundle\Component\EntityHandler;
+use Mapbender\CoreBundle\Component\SourceInstanceEntityHandler;
+use Mapbender\WmsBundle\Component\DimensionInst;
+use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
+use Mapbender\WmsBundle\Element\Type\DimensionsHandlerAdminType;
 
 /**
  * Dimensions handler
@@ -113,7 +117,10 @@ class DimensionsHandler extends Element
     {
         $configuration = parent::getConfiguration();
         foreach ($configuration['dimensionsets'] as $key => &$value) {
-            $value['dimension'] = $value['dimension']->getConfiguration();
+            /** @var DimensionInst $x */
+            /** @see DimensionsHandlerAdminType::buildForm() */
+            $x = $value['dimension'];
+            $value['dimension'] = $x->getConfiguration();
         }
         return $configuration;
     }
@@ -124,18 +131,19 @@ class DimensionsHandler extends Element
     public function postSave()
     {
         $configuration = parent::getConfiguration();
-        $instances = array();
+        $dimensionMap = array();
         foreach ($configuration['dimensionsets'] as $key => $value) {
             for ($i = 0; isset($value['group']) && count($value['group']) > $i; $i++) {
                 $item = explode("-", $value['group'][$i]);
-                $instances[$item[0]] = $value['dimension'];
+                $dimensionMap[$item[0]] = $value['dimension'];
             }
         }
         foreach ($this->application->getEntity()->getLayersets() as $layerset) {
             foreach ($layerset->getInstances() as $instance) {
-                if (key_exists($instance->getId(), $instances)) {
+                if (key_exists($instance->getId(), $dimensionMap)) {
+                    /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $handler */
                     $handler = EntityHandler::createHandler($this->container, $instance);
-                    $handler->mergeDimension($instances[$instance->getId()]);
+                    $handler->mergeDimension($dimensionMap[$instance->getId()]);
                     $handler->save();
                 }
             }

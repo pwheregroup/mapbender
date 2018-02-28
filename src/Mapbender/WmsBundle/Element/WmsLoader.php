@@ -4,6 +4,7 @@ namespace Mapbender\WmsBundle\Element;
 
 use Mapbender\CoreBundle\Component\Element;
 use Mapbender\CoreBundle\Component\EntityHandler;
+use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -238,7 +239,7 @@ class WmsLoader extends Element
             if (false !== $securityContext->isGranted('VIEW', $oid)) {
                 $instance = $this->container->get('doctrine')
                     ->getRepository("MapbenderWmsBundle:WmsInstance")->find($instanceid);
-                $entityHandler = EntityHandler::createHandler($this->container, $instance);
+                $entityHandler = new WmsInstanceEntityHandler($this->container, $instance);
                 $entityHandler->create(false);
                 $instConfig = array(
                     'type' => $entityHandler->getEntity()->getType(),
