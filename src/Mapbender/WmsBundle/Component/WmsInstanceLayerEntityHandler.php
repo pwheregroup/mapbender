@@ -208,16 +208,13 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
     {
         $configuration = array();
         if ($this->entity->getActive() === true) {
-            $children = null;
-            if ($this->entity->getSublayer()->count() > 0) {
-                $children = array();
-                foreach ($this->entity->getSublayer() as $sublayer) {
-                    /** @var WmsInstanceLayer $sublayer */
-                    $instLayHandler = new WmsInstanceLayerEntityHandler($this->container, $sublayer);
-                    $configurationTemp = $instLayHandler->generateConfiguration();
-                    if (count($configurationTemp) > 0) {
-                        $children[] = $configurationTemp;
-                    }
+            $children = array();
+            foreach ($this->entity->getSublayer() as $sublayer) {
+                /** @var WmsInstanceLayer $sublayer */
+                $instLayHandler = new WmsInstanceLayerEntityHandler($this->container, $sublayer);
+                $configurationTemp = $instLayHandler->generateConfiguration();
+                if (count($configurationTemp) > 0) {
+                    $children[] = $configurationTemp;
                 }
             }
             $layerConf = $this->getConfiguration();
@@ -230,7 +227,7 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
                     "outOfBounds" => null
                 ),
             );
-            if ($children !== null) {
+            if ($children) {
                 $configuration["children"] = $children;
             }
         }
