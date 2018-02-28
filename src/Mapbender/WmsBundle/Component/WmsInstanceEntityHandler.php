@@ -303,8 +303,8 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     protected function getRootLayerConfig()
     {
         $rootlayer = $this->entity->getRootlayer();
-        $entityHandler = new WmsInstanceLayerEntityHandler($this->container, $rootlayer);
-        $rootLayerConfig = $entityHandler->generateConfiguration();
+        $entityHandler = new WmsInstanceLayerEntityHandler($this->container, null);
+        $rootLayerConfig = $entityHandler->generateConfiguration($rootlayer);
         return $rootLayerConfig;
     }
 
