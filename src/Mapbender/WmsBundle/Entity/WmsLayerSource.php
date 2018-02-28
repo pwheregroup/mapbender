@@ -228,7 +228,7 @@ class WmsLayerSource extends SourceItem implements ContainingKeyword
 
     /**
      *
-     * @return ArrayCollection
+     * @return ArrayCollection|WmsLayerSource[]
      */
     public function getSublayer()
     {

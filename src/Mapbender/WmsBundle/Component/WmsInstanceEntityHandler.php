@@ -208,8 +208,9 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         $this->entity->setDimensions($dimensions);
 
         # TODO vendorspecific for layer specific parameters
-        self::createHandler($this->container, $this->entity->getRootlayer())
-            ->update($this->entity, $this->entity->getSource()->getRootlayer());
+        /** @var WmsInstanceLayerEntityHandler $rootUpdateHandler */
+        $rootUpdateHandler = new WmsInstanceLayerEntityHandler($this->container, $this->entity->getRootlayer());
+        $rootUpdateHandler->update($this->entity, $this->entity->getSource()->getRootlayer());
 
         $this->generateConfiguration();
         $this->container->get('doctrine')->getManager()->persist(
@@ -284,21 +285,6 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         $status = $this->entity->getSource()->getStatus();
         $configuration['status'] = $status && $status === Source::STATUS_UNREACHABLE ? 'error' : 'ok';
         return $configuration;
-    }
-
-    /**
-     * @param WmsInstanceLayer $rootLayer
-     * @return BoundingBox[]
-     */
-    private function extractBoundingBoxes(WmsInstanceLayer $rootLayer)
-    {
-        $sourceItem = $rootLayer->getSourceItem();
-        $bboxes = array();
-        $latLonBounds = $sourceItem->getLatlonBounds();
-        if ($latLonBounds) {
-            $bboxes[] = $latLonBounds;
-        }
-        return array_merge($bboxes, $sourceItem->getBoundingBoxes());
     }
 
     /**
