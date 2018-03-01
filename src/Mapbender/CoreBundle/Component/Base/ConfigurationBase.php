@@ -66,9 +66,9 @@ abstract class ConfigurationBase implements ConfigurationBaseInterface
         }
         $remap = $this->keyToAttributeMapping();
         foreach ($remap as $arrayKey =>  $attributeName) {
-            if (isset($options[$arrayKey])) {
-                $options[$attributeName] = $options[$arrayKey];
-                unset($options[$arrayKey]);
+            if (isset($mergedOptions[$arrayKey])) {
+                $mergedOptions[$attributeName] = $options[$arrayKey];
+                unset($mergedOptions[$arrayKey]);
             }
         }
         foreach ($mergedOptions as $key => $value) {
