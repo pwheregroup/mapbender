@@ -3,16 +3,23 @@ namespace Mapbender\WmsBundle\Component;
 
 use Mapbender\CoreBundle\Component\InstanceConfigurationOptions;
 use Mapbender\CoreBundle\Utils\UrlUtil;
+use Mapbender\WmcBundle\Component\WmcParser110;
 use Mapbender\WmsBundle\Entity\WmsInstance;
 
 /**
  * Description of WmsInstanceConfiguration
  *
  * @author Paul Schmidt
+ *
+ * @deprecated this entire class is only used transiently to capture values via its setters, then converted to
+ *     array and discared. The sanitization performed along the way is minimal.
+ *
+ * @see WmcParser110::parseLayer()
+ * @see WmsInstance::updateConfiguration()
+ * @internal
  */
 class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
 {
-
     /**
      * ORM\Column(type="string", nullable=true)
      */

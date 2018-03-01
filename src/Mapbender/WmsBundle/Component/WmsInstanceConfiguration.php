@@ -11,7 +11,15 @@ use Mapbender\WmsBundle\Entity\WmsInstance;
  *
  * @author Paul Schmidt
  *
+ * @deprecated this entire class is only used transiently to capture values via its setters, then converted to
+ *     array and discared. The sanitization performed along the way is minimal.
+ *
+ * @see WmcParser110::parseLayer()
+ * @see WmsInstance::updateConfiguration()
+ * @internal
+ *
  * @property WmsInstanceConfigurationOptions $options
+ *
  */
 class WmsInstanceConfiguration extends InstanceConfiguration
 {
