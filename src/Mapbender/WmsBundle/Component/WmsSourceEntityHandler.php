@@ -192,6 +192,6 @@ class WmsSourceEntityHandler extends SourceEntityHandler
      */
     public static function useTunnel(WmsSource $source)
     {
-        return !empty($source->getUsername());
+        return !!$source->getUsername();
     }
 }
