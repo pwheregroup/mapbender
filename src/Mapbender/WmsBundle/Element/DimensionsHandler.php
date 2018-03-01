@@ -126,6 +126,8 @@ class DimensionsHandler extends Element
     }
     
     /**
+     * @todo: remove this; adjusted layerset configuration should be generated on application load, not
+     *        persisted into the db.
      * @inheritdoc
      */
     public function postSave()
@@ -144,6 +146,12 @@ class DimensionsHandler extends Element
                     /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $handler */
                     $handler = EntityHandler::createHandler($this->container, $instance);
                     $handler->mergeDimension($dimensionMap[$instance->getId()]);
+                    /**
+                     * This is pretty expensive, saves the entire Wms Instance and all layers,
+                     * what exactly is the goal here?
+                     * @todo: figure out if this is necessary anymore, reduce to minimal db
+                     *        interaction
+                     */
                     $handler->save();
                 }
             }

@@ -254,22 +254,11 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      * Creates DimensionInst object, copies attributes from given Dimension object
      * @param \Mapbender\WmsBundle\Component\Dimension $dim
      * @return \Mapbender\WmsBundle\Component\DimensionInst
+     * @deprecated for redundant container dependency, call DimensionInst::fromDimension directly
      */
-    public static function createDimensionInst(Dimension $dim)
+    public function createDimensionInst(Dimension $dim)
     {
-        $diminst = new DimensionInst();
-        $diminst->setCurrent($dim->getCurrent());
-        $diminst->setDefault($dim->getDefault());
-        $diminst->setMultipleValues($dim->getMultipleValues());
-        $diminst->setName($dim->getName());
-        $diminst->setNearestValue($dim->getNearestValue());
-        $diminst->setUnitSymbol($dim->getUnitSymbol());
-        $diminst->setUnits($dim->getUnits());
-        $diminst->setActive(false);
-        $diminst->setOrigextent($dim->getExtent());
-        $diminst->setExtent($dim->getExtent());
-        $diminst->setType($diminst->findType($dim->getExtent()));
-        return $diminst;
+        return DimensionInst::fromDimension($dim);
     }
 
     /**
@@ -397,16 +386,16 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         return $vsarr;
     }
 
+    /**
+     * Copies Extent and Default from passed DimensionInst to any DimensionInst stored
+     * in bound WmsInstance that match the same Type.
+     *
+     * @param DimensionInst $dimension
+     * @deprecated
+     */
     public function mergeDimension($dimension)
     {
-        $dimensions = $this->entity->getDimensions();
-        foreach ($dimensions as $dim) {
-            if ($dim->getType() === $dimension->getType()) {
-                $dim->setExtent($dimension->getExtent());
-                $dim->setDefault($dimension->getDefault());
-            }
-        }
-        $this->entity->setDimensions($dimensions);
+        $this->entity->reconfigureDimensions($dimension);
     }
 
     /**
