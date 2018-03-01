@@ -203,8 +203,14 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      */
     public function remove()
     {
+        /**
+         * @todo: layerHandler->remve is redundant now, but it may require an automatic
+         *     doctrine:schema:update --force
+         *     before it can be removed
+         */
         $layerHandler = self::createHandler($this->container, $this->entity->getRootlayer());
         $layerHandler->remove();
+
         $this->container->get('doctrine')->getManager()->persist(
             $this->entity->getLayerset()->getApplication()->setUpdated(new \DateTime('now')));
         $this->container->get('doctrine')->getManager()->remove($this->entity);

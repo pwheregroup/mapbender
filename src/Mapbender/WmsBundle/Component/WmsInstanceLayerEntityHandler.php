@@ -106,9 +106,15 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
      */
     public function remove()
     {
+        /**
+         * @todo: sublayer remove is redundant now, but it may require an automatic
+         *     doctrine:schema:update --force
+         *     before it can be removed
+         */
         foreach ($this->entity->getSublayer() as $sublayer) {
             self::createHandler($this->container, $sublayer)->remove();
         }
+
         $this->container->get('doctrine')->getManager()->remove($this->entity);
     }
 
