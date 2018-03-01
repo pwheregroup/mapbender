@@ -124,51 +124,18 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         return $this->entity;
     }
 
-    public static function entityFactory(WmsSource $source)
-    {
-        $instance = new WmsInstance();
-        $instance->setSource($source);
-        // we only need to split here to remain compatible with the old
-        // `create` API
-        static::populateFromSource($instance, $source);
-        return $instance;
-    }
-
     /**
      * Copies attributes from bound instance's source to the bound instance.
-     * I.e. does not work until you have called ->setSource on the WmsInstance yourself.
-     * @deprecated
+     * I.e. does not work for a new instance until you have called ->setSource on the WmsInstance yourself,
+     * and does not achieve anything useful for an already configured instance loaded from the DB (though it's
+     * expensive!).
+     * If your source changed, and you want to push updates to your instance, you want to call update, not create.
+     *
+     * @deprecated for misleading wording, arcane usage, redundant container dependency
      */
     public function create()
     {
-        $this->populateFromSource($this->entity, $this->entity->getSource());
-    }
-
-    /**
-     * @param WmsInstance $target
-     * @param WmsSource $source
-     */
-    protected static function populateFromSource(WmsInstance $target, WmsSource $source)
-    {
-        $target->setTitle($source->getTitle());
-        $target->setFormat(ArrayUtil::getValueFromArray($source->getGetMap()->getFormats(), null, 0));
-        $target->setInfoformat(
-            ArrayUtil::getValueFromArray(
-                $source->getGetFeatureInfo() ? $source->getGetFeatureInfo()->getFormats() : array(),
-                null,
-                0
-            )
-        );
-        $target->setExceptionformat(ArrayUtil::getValueFromArray($source->getExceptionFormats(), null, 0));
-
-        $dimensions = static::getLayerDimensionInstances($source->getLayers());
-        $target->setDimensions($dimensions);
-
-        $target->setWeight(-1);
-        $wmslayer_root = $target->getSource()->getRootlayer();
-
-        // ??? @todo: return value is not used, does this implicitly modify one of the passed entities...?
-        WmsInstanceLayerEntityHandler::entityFactory($target, $wmslayer_root);
+        $this->entity->populateFromSource($this->entity->getSource());
     }
 
     /**
@@ -235,7 +202,7 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         $this->entity->setExceptionformat(
             ArrayUtil::getValueFromArray($source->getExceptionFormats(), $this->entity->getExceptionformat(), 0)
         );
-        $layerDimensionInsts = $this->getLayerDimensionInstances($source->getLayers());
+        $layerDimensionInsts = $source->dimensionInstancesFactory();
         $dimensions = $this->updateDimension($this->entity->getDimensions(), $layerDimensionInsts);
         $this->entity->setDimensions($dimensions);
 
@@ -396,25 +363,6 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     public function mergeDimension($dimension)
     {
         $this->entity->reconfigureDimensions($dimension);
-    }
-
-    /**
-     * @param WmsLayerSource[]
-     * @return array
-     */
-    private static function getLayerDimensionInstances($layers)
-    {
-        $dimensions = array();
-        foreach ($layers as $layer) {
-            /** @var WmsLayerSource $layer */
-            foreach ($layer->getDimension() as $dimension) {
-                $dim = static::createDimensionInst($dimension);
-                if (!in_array($dim, $dimensions)) {
-                    $dimensions[] = $dim;
-                }
-            }
-        }
-        return $dimensions;
     }
 
     /**

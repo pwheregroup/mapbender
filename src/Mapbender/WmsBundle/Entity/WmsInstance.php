@@ -5,6 +5,7 @@ namespace Mapbender\WmsBundle\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Mapbender\CoreBundle\Entity\SourceInstance;
+use Mapbender\CoreBundle\Utils\ArrayUtil;
 use Mapbender\WmsBundle\Component\DimensionInst;
 use Mapbender\WmsBundle\Component\VendorSpecific;
 use Mapbender\WmsBundle\Component\WmsInstanceConfiguration;
@@ -603,5 +604,29 @@ class WmsInstance extends SourceInstance
             }
         }
         $this->setDimensions($dimensions);
+    }
+
+    /**
+     * @param WmsSource $source
+     */
+    public function populateFromSource(WmsSource $source)
+    {
+        $this->setTitle($source->getTitle());
+        $this->setFormat(ArrayUtil::getValueFromArray($source->getGetMap()->getFormats(), null, 0));
+        $this->setInfoformat(
+            ArrayUtil::getValueFromArray(
+                $source->getGetFeatureInfo() ? $source->getGetFeatureInfo()->getFormats() : array(),
+                null,
+                0
+            )
+        );
+        $this->setExceptionformat(ArrayUtil::getValueFromArray($source->getExceptionFormats(), null, 0));
+
+        $this->setDimensions($source->dimensionInstancesFactory());
+        // @todo: ??? why? is that safe?
+        $this->setWeight(-1);
+
+        $newRootLayer = new WmsInstanceLayer();
+        $newRootLayer->populateFromSource($this, $source->getRootLayer());
     }
 }

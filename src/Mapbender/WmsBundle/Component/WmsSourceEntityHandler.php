@@ -64,8 +64,7 @@ class WmsSourceEntityHandler extends SourceEntityHandler
         $instance        = new WmsInstance();
         $instance->setSource($this->entity);
         $instance->setLayerset($layerSet);
-        $instanceHandler = new WmsInstanceEntityHandler($this->container, $instance);
-        $instanceHandler->create();
+        $instance->populateFromSource($this->entity);
         if ($layerSet) {
             $num = 0;
             foreach ($layerSet->getInstances() as $instanceAtLayerset) {
