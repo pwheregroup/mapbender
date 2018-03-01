@@ -42,7 +42,7 @@ class Layerset
     protected $application;
 
     /**
-     * @ORM\OneToMany(targetEntity="SourceInstance", mappedBy="layerset", cascade={"remove"})
+     * @ORM\OneToMany(targetEntity="SourceInstance", mappedBy="layerset", cascade={"remove","persist"})
      * @ORM\JoinColumn(name="instances", referencedColumnName="id")
      * @ORM\OrderBy({"weight" = "asc"})
      */
@@ -145,6 +145,17 @@ class Layerset
         $this->instances->add($instance);
     }
 
+    public function addInstanceAtOffset(SourceInstance $instance, $offset=-1)
+    {
+        $nInstances = $this->countInstances();
+        $instance->setWeight($nInstances);
+        $this->addInstance($instance);
+        $instance->setLayerset($this);
+        if ($offset >= 0) {
+            $this->moveInstance($instance, $offset);
+        }
+    }
+
     /**
      * Set instances
      *
@@ -174,5 +185,86 @@ class Layerset
     public function __toString()
     {
         return (string) $this->getId();
+    }
+
+    /**
+     * Move the given SourceInstance from its current offset to the given $targetOffset.
+     * The instance must be part of this Layerset.
+     *
+     * @param SourceInstance $instance
+     * @param int $targetOffset use -1 for end of list
+     * @return boolean true if any weights were changed (to guide persist / flush optimizations)
+     * @throws \LogicException if instance not part of Layerset
+     */
+    public function moveInstance(SourceInstance $instance, $targetOffset)
+    {
+        $instanceId = $instance->getId();
+        if ($instance->getLayerset()->getId() !== $this->getId()) {
+            throw new \LogicException("Instance with id " . print_r($instance->getId(), true) . " not part of Layerset");
+        }
+        $oldOffset = $instance->getWeight();
+        if ($targetOffset < 0) {
+            $nInstances = $this->countInstances();
+            if ($oldOffset < 0 || $oldOffset === null) {
+                $instance->setWeight($nInstances);
+                return true;
+            } else {
+                $targetOffset = $nInstances;
+            }
+        }
+
+        if ($oldOffset == $targetOffset) {
+            return false;
+        }
+        foreach ($this->instances as $otherInstance) {
+            $otherId = $otherInstance->getId();
+            $otherWeight = $otherInstance->getWeight();
+            if ($otherId == $instanceId) {
+                $instance->setWeight($targetOffset);
+            } elseif ($targetOffset < $oldOffset && $otherWeight >= $targetOffset && $otherWeight < $oldOffset) {
+                // instance offset is decreasing
+                // other instance was in the gap between target offset (low) and old offset (high)
+                // => other instance offset increases by one to make way
+                $otherInstance->setWeight($otherWeight + 1);
+            } elseif ($targetOffset > $oldOffset && $otherWeight <= $targetOffset && $otherWeight > $oldOffset) {
+                // instance offset is increasing
+                // other instance was in the gap between target offset (high) and old offset (low)
+                // => other instance offset decreases by one to make way
+                $otherInstance->setWeight($otherWeight - 1);
+            }
+            // NOTE: in all other cases, nothing needs to happen
+            //       instances outside of the range between target and old offset do not need to move
+        }
+        return true;
+    }
+
+    public function countInstances()
+    {
+        if ($this->instances instanceof Collection) {
+            return $this->instances->count();
+        } else {
+            // assume array; the constructor ensure a collection. If it's not an array either, we have bigger problems.
+            return count($this->instances);
+        }
+    }
+
+    /**
+     * @param SourceInstance $instance
+     * @return bool if any weights were changed (to guide persist / flush optimizations)
+     */
+    public function removeInstance(SourceInstance $instance)
+    {
+        $weightChanges = false;
+        if ($this->instances->removeElement($instance)) {
+            $oldWeight = $instance->getWeight();
+            foreach ($this->instances as $otherInstance) {
+                $otherWeight = $otherInstance->getWeight();
+                if ($otherWeight > $oldWeight) {
+                    $weightChanges = true;
+                    $otherInstance->setWeight($otherWeight - 1);
+                }
+            }
+        }
+        return $weightChanges;
     }
 }

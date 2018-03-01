@@ -1,6 +1,9 @@
 <?php
 namespace Mapbender\ManagerBundle\Controller;
 
+use Doctrine\ORM\EntityManager;
+use Mapbender\CoreBundle\Entity\Layerset;
+use Mapbender\CoreBundle\Entity\SourceInstance;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use FOM\ManagerBundle\Configuration\Route as ManagerRoute;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
@@ -267,98 +270,33 @@ class RepositoryController extends Controller
         if (!$instance) {
             throw $this->createNotFoundException('The source instance id:"' . $instanceId . '" does not exist.');
         }
+        /** @var SourceInstance $instance */
         if (intval($number) === $instance->getWeight() && $layersetId === $layersetId_new) {
             return new Response(json_encode(array(
                     'error' => '',
                     'result' => 'ok')), 200, array('Content-Type' => 'application/json'));
         }
 
+        /** @var EntityManager $em */
+        $em = $this->getDoctrine()->getManager();
         if ($layersetId === $layersetId_new) {
-            $em = $this->getDoctrine()->getManager();
-            $instance->setWeight($number);
-            $em->persist($instance);
-            $em->flush();
-            $query = $em->createQuery(
-                "SELECT i FROM MapbenderCoreBundle:SourceInstance i WHERE i.layerset=:lsid ORDER BY i.weight ASC"
-            );
-            $query->setParameters(array("lsid" => $layersetId));
-            $instList = $query->getResult();
-
-            $num = 0;
-            foreach ($instList as $inst) {
-                if ($num === intval($instance->getWeight())) {
-                    if ($instance->getId() === $inst->getId()) {
-                        $num++;
-                    } else {
-                        $num++;
-                        $inst->setWeight($num);
-                        $num++;
-                    }
-                } else {
-                    if ($instance->getId() !== $inst->getId()) {
-                        $inst->setWeight($num);
-                        $num++;
-                    }
-                }
+            if ($instance->getLayerset()->moveInstance($instance, $number)) {
+                $em->persist($instance->getLayerset());
+                $em->flush();
             }
-            foreach ($instList as $inst) {
-                $em->persist($inst);
-            }
-            $em->flush();
         } else {
+            $oldLayerset = $instance->getLayerset();
+            if ($oldLayerset->removeInstance($instance)) {
+                $em->persist($oldLayerset);
+            }
+            /** @var Layerset|null $layerset_new */
+            // @todo: it might really be null, need an earlier check
             $layerset_new = $this->getDoctrine()
                 ->getRepository("MapbenderCoreBundle:Layerset")
                 ->find($layersetId_new);
-            $em = $this->getDoctrine()->getManager();
-            $instance->setLayerset($layerset_new);
-            $layerset_new->addInstance($instance);
-            $instance->setWeight($number);
+            $layerset_new->addInstanceAtOffset($instance, $number);
             $em->persist($layerset_new);
-            $em->persist($instance);
             $em->flush();
-
-            // order instances of the old layerset
-            $query = $em->createQuery(
-                "SELECT i FROM MapbenderCoreBundle:SourceInstance i WHERE i.layerset=:lsid ORDER BY i.weight ASC"
-            );
-            $query->setParameters(array("lsid" => $layersetId));
-            $instList = $query->getResult();
-
-            $num = 0;
-            foreach ($instList as $inst) {
-                $inst->setWeight($num);
-                $em->persist($inst);
-                $num++;
-            }
-            $em->flush();
-
-            // order instances of the new layerset
-            $query = $em->createQuery(
-                "SELECT i FROM MapbenderCoreBundle:SourceInstance i WHERE i.layerset=:lsid ORDER BY i.weight ASC"
-            );
-            $query->setParameters(array("lsid" => $layersetId_new));
-            $instList = $query->getResult();
-            $num = 0;
-            foreach ($instList as $inst) {
-                if ($num === intval($instance->getWeight())) {
-                    if ($instance->getId() === $inst->getId()) {
-                        $num++;
-                    } else {
-                        $num++;
-                        $inst->setWeight($num);
-                        $num++;
-                    }
-                } else {
-                    if ($instance->getId() !== $inst->getId()) {
-                        $inst->setWeight($num);
-                        $num++;
-                    }
-                }
-            }
-            foreach ($instList as $inst) {
-                $em->persist($inst);
-                $em->flush();
-            }
         }
 
         return new Response(json_encode(array(
