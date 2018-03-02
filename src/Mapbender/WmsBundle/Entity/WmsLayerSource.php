@@ -1080,7 +1080,7 @@ class WmsLayerSource extends SourceItem implements ContainingKeyword
      * Set priority
      *
      * @param integer $priority
-     * @return WmsInstanceLayer
+     * @return $this
      */
     public function setPriority($priority)
     {

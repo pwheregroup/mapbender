@@ -2,15 +2,13 @@
 namespace Mapbender\WmsBundle\Component;
 
 use Doctrine\ORM\EntityManager;
+use Mapbender\CoreBundle\Component\ApplicationYAMLMapper;
 use Mapbender\CoreBundle\Component\Signer;
 use Mapbender\CoreBundle\Component\SourceInstanceEntityHandler;
 use Mapbender\CoreBundle\Entity\Source;
 use Mapbender\CoreBundle\Utils\ArrayUtil;
 use Mapbender\CoreBundle\Utils\UrlUtil;
 use Mapbender\WmsBundle\Entity\WmsInstance;
-use Mapbender\WmsBundle\Entity\WmsInstanceLayer;
-use Mapbender\WmsBundle\Entity\WmsLayerSource;
-use Mapbender\WmsBundle\Entity\WmsSource;
 use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 
 /**
@@ -31,97 +29,10 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      */
     public function setParameters(array $configuration = array())
     {
-        /** @var WmsInstance $sourceInstance */
-        if (!$this->entity->getSource()) {
-            $this->entity->setSource(new WmsSource());
-        }
-        $source = $this->entity->getSource();
-        $source->setId(ArrayUtil::hasSet($configuration, 'id', ""))
-            ->setTitle(ArrayUtil::hasSet($configuration, 'id', ""));
-        $source->setVersion(ArrayUtil::hasSet($configuration, 'version', "1.1.1"));
-        $source->setOriginUrl(ArrayUtil::hasSet($configuration, 'url'));
-        $source->setGetMap(new RequestInformation());
-        $source->getGetMap()->addFormat(ArrayUtil::hasSet($configuration, 'format', true))
-            ->setHttpGet(ArrayUtil::hasSet($configuration, 'url'));
-        if (isset($configuration['info_format'])) {
-            $source->setGetFeatureInfo(new RequestInformation());
-            $source->getGetFeatureInfo()->addFormat(ArrayUtil::hasSet($configuration, 'info_format', true))
-                ->setHttpGet(ArrayUtil::hasSet($configuration, 'url'));
-        }
-
-        $this->entity
-            ->setId(ArrayUtil::hasSet($configuration, 'id', null))
-            ->setTitle(ArrayUtil::hasSet($configuration, 'title', ""))
-            ->setWeight(ArrayUtil::hasSet($configuration, 'weight', 0))
-            ->setLayerset(ArrayUtil::hasSet($configuration, 'layerset'))
-            ->setProxy(ArrayUtil::hasSet($configuration, 'proxy', false))
-            ->setVisible(ArrayUtil::hasSet($configuration, 'visible', true))
-            ->setFormat(ArrayUtil::hasSet($configuration, 'format', true))
-            ->setInfoformat(ArrayUtil::hasSet($configuration, 'info_format'))
-            ->setTransparency(ArrayUtil::hasSet($configuration, 'transparent', true))
-            ->setOpacity(ArrayUtil::hasSet($configuration, 'opacity', 100))
-            ->setTiled(ArrayUtil::hasSet($configuration, 'tiled', false))
-            ->setBaseSource(ArrayUtil::hasSet($configuration, 'isBaseSource', true));
-
-        $num  = 0;
-        $layersourceroot = new WmsLayerSource();
-        $layersourceroot->setPriority($num)
-            ->setSource($source)
-            ->setTitle($this->entity->getTitle())
-            ->setId($source->getId() . '_' . $num);
-        $source->addLayer($layersourceroot);
-        $rootInstLayer = new WmsInstanceLayer();
-        $rootInstLayer->setTitle($this->entity->getTitle())
-            ->setId($this->entity->getId() . "_" . $num)
-            ->setMinScale(!isset($configuration["minScale"]) ? null : $configuration["minScale"])
-            ->setMaxScale(!isset($configuration["maxScale"]) ? null : $configuration["maxScale"])
-            ->setSelected(!isset($configuration["visible"]) ? false : $configuration["visible"])
-            ->setPriority($num)
-            ->setSourceItem($layersourceroot)
-            ->setSourceInstance($this->entity)
-            ->setToggle(false)
-            ->setAllowtoggle(true);
-        $this->entity->addLayer($rootInstLayer);
-        foreach ($configuration["layers"] as $layerDef) {
-            $num++;
-            $layersource = new WmsLayerSource();
-            $layersource->setSource($source)
-                ->setName($layerDef["name"])
-                ->setTitle($layerDef['title'])
-                ->setParent($layersourceroot)
-                ->setId($this->entity->getId() . '_' . $num);
-            if (isset($layerDef["legendurl"])) {
-                $style          = new Style();
-                $style->setName(null);
-                $style->setTitle(null);
-                $style->setAbstract(null);
-                $legendUrl      = new LegendUrl();
-                $legendUrl->setWidth(null);
-                $legendUrl->setHeight(null);
-                $onlineResource = new OnlineResource();
-                $onlineResource->setFormat(null);
-                $onlineResource->setHref($layerDef["legendurl"]);
-                $legendUrl->setOnlineResource($onlineResource);
-                $style->setLegendUrl($legendUrl);
-                $layersource->addStyle($style);
-            }
-            $layersourceroot->addSublayer($layersource);
-            $source->addLayer($layersource);
-            $layerInst       = new WmsInstanceLayer();
-            $layerInst->setTitle($layerDef["title"])
-                ->setId($this->entity->getId() . '_' . $num)
-                ->setMinScale(!isset($layerDef["minScale"]) ? null : $layerDef["minScale"])
-                ->setMaxScale(!isset($layerDef["maxScale"]) ? null : $layerDef["maxScale"])
-                ->setSelected(!isset($layerDef["visible"]) ? false : $layerDef["visible"])
-                ->setInfo(!isset($layerDef["queryable"]) ? false : $layerDef["queryable"])
-                ->setParent($rootInstLayer)
-                ->setSourceItem($layersource)
-                ->setSourceInstance($this->entity)
-                ->setAllowinfo($layerInst->getInfo() !== null && $layerInst->getInfo() ? true : false);
-            $rootInstLayer->addSublayer($layerInst);
-            $this->entity->addLayer($layerInst);
-        }
-        return $this->entity;
+        // backwards-compatibility HACK: ApplicationYAMLMapper uses dynamic class-name based
+        // reflection to arrive here (and only here?), but now that we know for sure
+        // we're dealing with a WmsInstance, we bounce the duties right back
+        return ApplicationYAMLMapper::configureWmsInstance($this->entity, $configuration);
     }
 
     /**

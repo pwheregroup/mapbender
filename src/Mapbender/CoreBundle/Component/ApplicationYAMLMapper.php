@@ -7,6 +7,15 @@ use Mapbender\CoreBundle\Entity\Application as ApplicationEntity;
 use Mapbender\CoreBundle\Entity\Element;
 use Mapbender\CoreBundle\Entity\Layerset;
 use Mapbender\CoreBundle\Entity\RegionProperties;
+use Mapbender\CoreBundle\Utils\ArrayUtil;
+use Mapbender\WmsBundle\Component\LegendUrl;
+use Mapbender\WmsBundle\Component\OnlineResource;
+use Mapbender\WmsBundle\Component\RequestInformation;
+use Mapbender\WmsBundle\Component\Style;
+use Mapbender\WmsBundle\Entity\WmsInstance;
+use Mapbender\WmsBundle\Entity\WmsInstanceLayer;
+use Mapbender\WmsBundle\Entity\WmsLayerSource;
+use Mapbender\WmsBundle\Entity\WmsSource;
 use Psr\Log\LoggerInterface;
 use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -232,5 +241,105 @@ class ApplicationYAMLMapper
         $application->setSource(ApplicationEntity::SOURCE_YAML);
 
         return $application;
+    }
+
+    /**
+     * @param WmsInstance $instance
+     * @param mixed[] $configuration
+     * @return WmsInstance same as input
+     */
+    public static function configureWmsInstance($instance, $configuration)
+    {
+        /** @var WmsInstance $sourceInstance */
+        if (!$instance->getSource()) {
+            $instance->setSource(new WmsSource());
+        }
+        $source = $instance->getSource();
+        $source->setId(ArrayUtil::hasSet($configuration, 'id', ""))
+            ->setTitle(ArrayUtil::hasSet($configuration, 'id', ""));
+        $source->setVersion(ArrayUtil::hasSet($configuration, 'version', "1.1.1"));
+        $source->setOriginUrl(ArrayUtil::hasSet($configuration, 'url'));
+        $source->setGetMap(new RequestInformation());
+        $source->getGetMap()->addFormat(ArrayUtil::hasSet($configuration, 'format', true))
+            ->setHttpGet(ArrayUtil::hasSet($configuration, 'url'));
+        if (isset($configuration['info_format'])) {
+            $source->setGetFeatureInfo(new RequestInformation());
+            $source->getGetFeatureInfo()->addFormat(ArrayUtil::hasSet($configuration, 'info_format', true))
+                ->setHttpGet(ArrayUtil::hasSet($configuration, 'url'));
+        }
+
+        $instance
+            ->setId(ArrayUtil::hasSet($configuration, 'id', null))
+            ->setTitle(ArrayUtil::hasSet($configuration, 'title', ""))
+            ->setWeight(ArrayUtil::hasSet($configuration, 'weight', 0))
+            ->setLayerset(ArrayUtil::hasSet($configuration, 'layerset'))
+            ->setProxy(ArrayUtil::hasSet($configuration, 'proxy', false))
+            ->setVisible(ArrayUtil::hasSet($configuration, 'visible', true))
+            ->setFormat(ArrayUtil::hasSet($configuration, 'format', true))
+            ->setInfoformat(ArrayUtil::hasSet($configuration, 'info_format'))
+            ->setTransparency(ArrayUtil::hasSet($configuration, 'transparent', true))
+            ->setOpacity(ArrayUtil::hasSet($configuration, 'opacity', 100))
+            ->setTiled(ArrayUtil::hasSet($configuration, 'tiled', false))
+            ->setBaseSource(ArrayUtil::hasSet($configuration, 'isBaseSource', true));
+
+        $num  = 0;
+        $layersourceroot = new WmsLayerSource();
+        $layersourceroot->setPriority($num)
+            ->setSource($source)
+            ->setTitle($instance->getTitle())
+            ->setId($source->getId() . '_' . $num);
+        $source->addLayer($layersourceroot);
+        $rootInstLayer = new WmsInstanceLayer();
+        $rootInstLayer->setTitle($instance->getTitle())
+            ->setId($instance->getId() . "_" . $num)
+            ->setMinScale(!isset($configuration["minScale"]) ? null : $configuration["minScale"])
+            ->setMaxScale(!isset($configuration["maxScale"]) ? null : $configuration["maxScale"])
+            ->setSelected(!isset($configuration["visible"]) ? false : $configuration["visible"])
+            ->setPriority($num)
+            ->setSourceItem($layersourceroot)
+            ->setSourceInstance($instance)
+            ->setToggle(false)
+            ->setAllowtoggle(true);
+        $instance->addLayer($rootInstLayer);
+        foreach ($configuration["layers"] as $layerDef) {
+            $num++;
+            $layersource = new WmsLayerSource();
+            $layersource->setSource($source)
+                ->setName($layerDef["name"])
+                ->setTitle($layerDef['title'])
+                ->setParent($layersourceroot)
+                ->setId($instance->getId() . '_' . $num);
+            if (isset($layerDef["legendurl"])) {
+                $style          = new Style();
+                $style->setName(null);
+                $style->setTitle(null);
+                $style->setAbstract(null);
+                $legendUrl      = new LegendUrl();
+                $legendUrl->setWidth(null);
+                $legendUrl->setHeight(null);
+                $onlineResource = new OnlineResource();
+                $onlineResource->setFormat(null);
+                $onlineResource->setHref($layerDef["legendurl"]);
+                $legendUrl->setOnlineResource($onlineResource);
+                $style->setLegendUrl($legendUrl);
+                $layersource->addStyle($style);
+            }
+            $layersourceroot->addSublayer($layersource);
+            $source->addLayer($layersource);
+            $layerInst       = new WmsInstanceLayer();
+            $layerInst->setTitle($layerDef["title"])
+                ->setId($instance->getId() . '_' . $num)
+                ->setMinScale(!isset($layerDef["minScale"]) ? null : $layerDef["minScale"])
+                ->setMaxScale(!isset($layerDef["maxScale"]) ? null : $layerDef["maxScale"])
+                ->setSelected(!isset($layerDef["visible"]) ? false : $layerDef["visible"])
+                ->setInfo(!isset($layerDef["queryable"]) ? false : $layerDef["queryable"])
+                ->setParent($rootInstLayer)
+                ->setSourceItem($layersource)
+                ->setSourceInstance($instance)
+                ->setAllowinfo($layerInst->getInfo() !== null && $layerInst->getInfo() ? true : false);
+            $rootInstLayer->addSublayer($layerInst);
+            $instance->addLayer($layerInst);
+        }
+        return $instance;
     }
 }
