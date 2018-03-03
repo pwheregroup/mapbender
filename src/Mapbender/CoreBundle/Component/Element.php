@@ -28,9 +28,17 @@ abstract class Element
     public static $ext_api = true;
 
     /**
-     * Merge Configurations. The merge_configurations defines, if the default
-     * configuration array and the configuration array should be merged
+     * Only evaluated by ApplicationYAMLMapper.
+     * Used to indicate that your getDefaultConfiguration returns "difficult"
+     * sub-array values that should not be merged into the intial generated
+     * Element Entity configuration. This is a workaround for the triviality
+     * of subarray handling in mergeArrays, which handles everything as
+     * hashmaps, so flat numeric subarrays will rewrite each other
+     * and duplicates can be produced.
+     *
+     * @todo: stop using this, override your mergeArrays to keep your subarrays unique as you require
      * @var boolean merge configurations
+     * @deprecated
      */
     public static $merge_configurations = true;
 
