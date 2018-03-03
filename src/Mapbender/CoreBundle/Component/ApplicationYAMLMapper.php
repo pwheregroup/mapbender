@@ -8,6 +8,7 @@ use Mapbender\CoreBundle\Entity\Element;
 use Mapbender\CoreBundle\Entity\Layerset;
 use Mapbender\CoreBundle\Entity\RegionProperties;
 use Mapbender\CoreBundle\Utils\ArrayUtil;
+use Mapbender\CoreBundle\Utils\ArrayUtilYamlQuirks;
 use Mapbender\WmsBundle\Component\LegendUrl;
 use Mapbender\WmsBundle\Component\OnlineResource;
 use Mapbender\WmsBundle\Component\RequestInformation;
@@ -189,15 +190,11 @@ class ApplicationYAMLMapper
                         ));
                         continue;
                     }
+                    /** @var ElementComponent $elComp */
                     $elComp = new $entity_class($appl, $this->container, new \Mapbender\CoreBundle\Entity\Element());
-
-                    $elm_class = get_class($elComp);
-                    if ($elm_class::$merge_configurations) {
-                        $configuration =
-                            ElementComponent::mergeArrays($elComp->getDefaultConfiguration(), $configuration_, array());
-                    } else {
-                        $configuration = $configuration_;
-                    }
+                    /** @todo: this method is static, we don't need to fake an Application to call it */
+                    $elDefaults = $elComp->getDefaultConfiguration();
+                    $configuration = ArrayUtilYamlQuirks::combineRecursive($elDefaults, $configuration_);
 
                     $class = $elementDefinition['class'];
                     $title = array_key_exists('title', $elementDefinition) ?

@@ -29,16 +29,10 @@ abstract class Element
     public static $ext_api = true;
 
     /**
-     * Only evaluated by ApplicationYAMLMapper.
-     * Used to indicate that your getDefaultConfiguration returns "difficult"
-     * sub-array values that should not be merged into the intial generated
-     * Element Entity configuration. This is a workaround for the triviality
-     * of subarray handling in mergeArrays, which handles everything as
-     * hashmaps, so flat numeric subarrays will rewrite each other
-     * and duplicates can be produced.
+     * No purpose. Previously evaluated by ApplicationYAMLMapper. Kept dangling for
+     * compatibility.
      *
-     * @todo: stop using this, override your mergeArrays to keep your subarrays unique as you require
-     * @var boolean merge configurations
+     * @var boolean
      * @deprecated
      */
     public static $merge_configurations = true;
@@ -454,6 +448,8 @@ abstract class Element
      * @param array $main the configuration of an element
      * @param array $result the result configuration
      * @return array the result configuration
+     *
+     * @deprecated for bad SoC, use array_merge_recursive or something from ArrayUtil
      */
     public static function mergeArrays($default, $main, $result)
     {

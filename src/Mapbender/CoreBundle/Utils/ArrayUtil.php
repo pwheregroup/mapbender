@@ -25,6 +25,19 @@ class ArrayUtil
     }
 
     /**
+     * Check if input $array is a pure list. Meaning:
+     * 1) all keys are integers
+     * 2) key order is strictly ascending
+     * 3) keys range exactly from 0 to count - 1, no gaps
+     * @param $array
+     * @return boolean
+     */
+    public static function isStrictList($array)
+    {
+        return range(0, count($array) - 1) === array_keys($array);
+    }
+
+    /**
      * Get value from array
      *
      * @param array $list
@@ -122,6 +135,7 @@ class ArrayUtil
     public static function mergeHashesRecursive($a, $b)
     {
         $result = array();
+        // quirk 1: start building result by traversing $b's keys
         foreach ($b as $key => $value) {
             if (is_array($value)) {
                 if (isset($a[$key])) {
@@ -135,6 +149,7 @@ class ArrayUtil
         }
         if (is_array($a)) {
             foreach ($a as $key => $value) {
+                // quirk 2: nulls in $b are ignored, use value from $a
                 if (!isset($result[$key])) {
                     $result[$key] = $value;
                 }
@@ -173,4 +188,36 @@ class ArrayUtil
         }
     }
 
+    /**
+     * Hash-vs-list-aware recursive array merging.
+     * ALMOST equivalent to array_merge_recursive except
+     * 1) result key ordering follows $b first, not $a
+     * 2) null values from $b will not integrate into resut, $a values will be kept
+     * 3) added policy for handling numeric sub-array collisions (default: same as array_merge)
+     *
+     * If you need none of these quirks call array_merge_recursive
+     *
+     * @param mixed[] $a
+     * @param mixed[] $b
+     * @param boolean $replaceLists to replace, not merge, list-style sub-arrays
+     * @return mixed[]
+     */
+    public static function combineRecursive($a, $b, $replaceLists = false)
+    {
+        $result = $b + $a;
+        foreach ($b as $key => $value) {
+            if (is_null($result[$key]) && isset($a[$key])) {
+                // quirk 2: nulls in $b are ignored, use value from $a
+                $result[$key] = $a[$key];
+            } elseif (is_array($result[$key]) && isset($a[$key]) && isset($b[$key])) {
+                if ($replaceLists && static::isStrictList($result[$key])) {
+                    // quirk 3: replace entire list, discard all values from $a
+                    $results[$key] = $b[$key];
+                } else {
+                    $result[$key] = static::combineRecursive($a[$key], $b[$key], $replaceLists);
+                }
+            }
+        }
+        return $result;
+    }
 }
