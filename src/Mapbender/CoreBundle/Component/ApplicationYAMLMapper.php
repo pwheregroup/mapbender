@@ -128,17 +128,41 @@ class ApplicationYAMLMapper
             }
         }
 
+
+        foreach ($this->makeElementEntities($application, $definition) as $element) {
+            $application->addElement($element);
+        }
+
+        $application->setYamlRoles(array_key_exists('roles', $definition) ? $definition['roles'] : array());
+
+        foreach ($this->makeLayerSets($definition) as $layerSet) {
+            $layerSet->setApplication($application);
+            $application->addLayerset($layerSet);
+        }
+        $application->setSource(ApplicationEntity::SOURCE_YAML);
+
+        return $application;
+    }
+
+    /**
+     * @param Application $application
+     * @param mixed[] $definition
+     * @return Element[]
+     */
+    public function makeElementEntities(Application $application, $definition)
+    {
+        $elementEntities = array();
         if (!isset($definition['elements'])) {
             $definition['elements'] = array();
         }
 
-        // Then create elements
         foreach ($definition['elements'] as $region => $elementsDefinition) {
             $weight = 0;
             if ($elementsDefinition !== null) {
                 foreach ($elementsDefinition as $id => $elementDefinition) {
                     /**
                      * MAP Layersets handling
+                     * @todo: support inheritance (probably by using is_a)
                      */
                     if ($elementDefinition['class'] == "Mapbender\\CoreBundle\\Element\\Map") {
                         if (!isset($elementDefinition['layersets'])) {
@@ -192,20 +216,11 @@ class ApplicationYAMLMapper
 
                     // set Roles
                     $element->setYamlRoles(array_key_exists('roles', $elementDefinition) ? $elementDefinition['roles'] : array());
-                    $application->addElement($element);
+                    $elementEntities[] = $element;
                 }
             }
         }
-
-        $application->setYamlRoles(array_key_exists('roles', $definition) ? $definition['roles'] : array());
-
-        foreach ($this->makeLayerSets($definition) as $layerSet) {
-            $layerSet->setApplication($application);
-            $application->addLayerset($layerSet);
-        }
-        $application->setSource(ApplicationEntity::SOURCE_YAML);
-
-        return $application;
+        return $elementEntities;
     }
 
     /**
