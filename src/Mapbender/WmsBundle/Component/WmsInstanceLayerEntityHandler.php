@@ -179,10 +179,8 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
      */
     public function generateConfiguration(WmsInstanceLayer $entity = null)
     {
-        if (!$entity) {
-            // delegate to self, use bound entity
-            return $this->generateConfiguration($this->entity);
-        } elseif (!$entity->getActive()) {
+        $entity = $entity ?: $this->entity;
+        if (!$entity->getActive()) {
             return array();
         } else {
             $children = array();
