@@ -248,7 +248,7 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
         );
         ;
         $srses = array();
-        foreach ($sourceItem->getMergedBoundingBoxes() as $bbox) {
+        foreach ($sourceItem->getMergedBoundingBoxes(true) as $bbox) {
             $srses[$bbox->getSrs()] = $bbox->toCoordsArray();
         }
         $configuration['bbox'] = $srses;
