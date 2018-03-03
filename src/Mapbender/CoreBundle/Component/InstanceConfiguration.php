@@ -25,7 +25,7 @@ abstract class InstanceConfiguration extends ConfigurationBase
 
     /**
      * ORM\Column(type="text", nullable=true)
-     * @var InstanceConfigurationOptions
+     * @var InstanceConfigurationOptions|array
      */
     public $options;
 
@@ -144,18 +144,5 @@ abstract class InstanceConfiguration extends ConfigurationBase
      */
     public abstract function getChildren();
     
-    /**
-     * @inheritdoc
-     */
-    public static function defaults()
-    {
-        return array(
-            'type' => null,
-            'title' => null,
-            'options' => array(),
-            'children' => array(),
-            'isBaseSource' => true,
-        );
-    }
 }
 

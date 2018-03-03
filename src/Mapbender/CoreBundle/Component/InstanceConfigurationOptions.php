@@ -17,17 +17,17 @@ abstract class InstanceConfigurationOptions extends ConfigurationBase
     /**
      * ORM\Column(type="float", nullable=true)
      */
-    public $opacity;
+    public $opacity = 1;
 
     /**
      * ORM\Column(type="boolean", nullable=true)
      */
-    public $proxy;
+    public $proxy = false;
 
     /**
      * ORM\Column(type="boolean", nullable=true)
      */
-    public $visible;
+    public $visible = true;
 
     /**
      * Sets an url
@@ -139,21 +139,6 @@ abstract class InstanceConfigurationOptions extends ConfigurationBase
             "opacity" => $this->opacity,
             "proxy" => $this->proxy,
             "visible" => $this->visible,
-        );
-    }
-
-    /**
-     * @return array
-     * Policy; no "get" prefix for non-serializible getter functions in objects that are persisted or exported
-     */
-    public static function defaults()
-    {
-        // all properties uninitialized
-        return array(
-            "url" => null,
-            "opacity" => null,
-            "proxy" => null,
-            "visible" => null,
         );
     }
 }

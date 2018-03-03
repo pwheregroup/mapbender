@@ -23,7 +23,7 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    public $version;
+    public $version = '';
 
     /**
      *
@@ -34,7 +34,7 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    public $format;
+    public $format = 'image/png';
 
     /**
      * ORM\Column(type="string", nullable=true)
@@ -44,27 +44,27 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
     /**
      * ORM\Column(type="boolean", nullable=true)
      */
-    public $transparency;
+    public $transparency = true;
 
     /**
      * ORM\Column(type="array", nullable=true)
      */
-    protected $vendorspecifics;
+    protected $vendorspecifics = array();
 
     /**
      * ORM\Column(type="string", nullable=true)
      */
-    public $tiled;
+    public $tiled = false;
 
     /**
      * ORM\Column(type="array", nullable=true)
      */
-    public $bbox;
+    public $bbox = array();
     
     /**
      * ORM\Column(type="array", nullable=true)
      */
-    public $dimensions;
+    public $dimensions = array();
 
     /**
      * ORM\Column(type="integer", options={"default" = 0})
@@ -363,7 +363,7 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
             'visible' => $instance->getVisible(),
             'format' => $instance->getFormat(),
             'info_format' => $instance->getInfoformat(),
-            'transparency' => $instance->getTransparency(),
+            'transparent' => $instance->getTransparency(),
             'opacity' => ($instance->getOpacity() / 100),
             'tiled' => $instance->getTiled(),
             'buffer' => $instance->getBuffer(),
@@ -374,30 +374,13 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
         ));
     }
 
-    public static function defaults()
-    {
-        return parent::defaults() + array(
-            'buffer' => 0,
-            'ratio' => 1.25,
-            // everything else is uninitialized
-            'version' => null,
-            'exception_format' => null,     // danger zone: attribute name is exceptionformat, with no underscore
-            'format' => null,
-            'info_format' => null,          // danger zone: attribute name is infoformat, with no underscore
-            'transparency' => null,
-            'vendorspecifics' => null,
-            'tiled' => null,
-            'bbox' => null,
-            'dimensions' => null,
-        );
-    }
-
     protected static function keyToAttributeMapping()
     {
-        // remap our two "danger zone" keys
+        // remap our three "danger zone" keys
         return array(
             'exception_format' => 'exceptionformat',
             'info_format' => 'infoformat',
+            'transparent' => 'transparency',
         );
     }
 }

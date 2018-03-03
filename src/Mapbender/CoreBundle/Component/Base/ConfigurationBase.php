@@ -12,8 +12,10 @@ namespace Mapbender\CoreBundle\Component\Base;
  * Going back and forth should be idempotent. fromArray has a (by default enabled) strict mode that
  * enforces that only known value keys can appear in the input array.
  */
-abstract class ConfigurationBase implements ConfigurationBaseInterface
+abstract class ConfigurationBase
 {
+    protected static $classDefaults = array();
+
     /**
      * Convert the instance to an array representation.
      *
@@ -40,7 +42,7 @@ abstract class ConfigurationBase implements ConfigurationBaseInterface
             }
         }
         $instance = new static();
-        $instance->populateAttributes($options, static::defaults(), $strict);
+        $instance->populateAttributes($options, $strict);
         return $instance;
     }
 
@@ -48,30 +50,28 @@ abstract class ConfigurationBase implements ConfigurationBaseInterface
      * Perform mass attribute population from array via magic attribute access.
      *
      * @param mixed[] $options
-     * @param mixed[] $defaults
      * @param boolean $strict
      * @throws \RuntimeException if unsupported value keys are found and $strict == true
      */
-    protected function populateAttributes($options, $defaults, $strict)
+    protected function populateAttributes($options, $strict)
     {
-        $mergedOptions = array_replace($defaults, $options);
         if ($strict) {
-            $validateAgainst = $defaults ?: $this->defaults();
+            $validateAgainst = $this->validSet();
             $badKeys = array_keys(array_diff_key($options, $validateAgainst));
             if ($badKeys) {
-                $message = "Unsupported keys in options: " . implode(", ", $badKeys);
+                $message = "Unsupported " . get_class($this) . " keys in options: " . implode(", ", $badKeys);
                 $message .= "; have: " . implode(", ", array_keys($validateAgainst));
                 throw new \RuntimeException($message);
             }
         }
         $remap = $this->keyToAttributeMapping();
         foreach ($remap as $arrayKey =>  $attributeName) {
-            if (isset($mergedOptions[$arrayKey])) {
-                $mergedOptions[$attributeName] = $options[$arrayKey];
-                unset($mergedOptions[$arrayKey]);
+            if (isset($options[$arrayKey])) {
+                $options[$attributeName] = $options[$arrayKey];
+                unset($options[$arrayKey]);
             }
         }
-        foreach ($mergedOptions as $key => $value) {
+        foreach ($options as $key => $value) {
             $this->{$key} = $value;
         }
     }
@@ -85,5 +85,21 @@ abstract class ConfigurationBase implements ConfigurationBaseInterface
     protected static function keyToAttributeMapping()
     {
         return array();
+    }
+
+    /**
+     * @return array
+     * Policy; no "get" prefix for non-serializible getter functions in objects that are persisted
+     * or exported or otherwise magically scanned for methods with "get" / "is" / "has" etc
+     */
+    public static function validSet()
+    {
+        $cls = get_called_class();
+        if (!array_key_exists($cls, self::$classDefaults)) {
+            /** @var static $blankInstance */
+            $blankInstance = new $cls;
+            self::$classDefaults[$cls] = $blankInstance->toArray();
+        }
+        return self::$classDefaults[$cls];
     }
 }

@@ -18,7 +18,7 @@ use Mapbender\WmsBundle\Entity\WmsInstance;
  * @see WmsInstance::updateConfiguration()
  * @internal
  *
- * @property WmsInstanceConfigurationOptions $options
+ * @property WmsInstanceConfigurationOptions|array $options
  *
  */
 class WmsInstanceConfiguration extends InstanceConfiguration
@@ -71,11 +71,16 @@ class WmsInstanceConfiguration extends InstanceConfiguration
      */
     public function toArray()
     {
+        if (is_array($this->options)) {
+            $optionsArray = $this->options;
+        } else {
+            $optionsArray = $this->options->toArray();
+        }
         return array(
             "type" => $this->type,
             "title" => $this->title,
             "isBaseSource" => $this->isBaseSource,
-            "options" => $this->options->toArray(),
+            "options" => $optionsArray,
             "children" => $this->children
         );
     }
