@@ -199,6 +199,21 @@ class ApplicationYAMLMapper
 
         $application->setYamlRoles(array_key_exists('roles', $definition) ? $definition['roles'] : array());
 
+        foreach ($this->makeLayerSets($definition) as $layerSet) {
+            $layerSet->setApplication($application);
+            $application->addLayerset($layerSet);
+        }
+        $application->setSource(ApplicationEntity::SOURCE_YAML);
+
+        return $application;
+    }
+
+    /**
+     * @param mixed[] $definition
+     * @return LayerSet[]
+     */
+    public function makeLayerSets($definition)
+    {
         if (!isset($definition['layersets'])) {
             $definition['layersets'] = array();
 
@@ -211,6 +226,8 @@ class ApplicationYAMLMapper
         }
 
         // TODO: Add roles, entity needs work first
+
+        $layerSets = array();
         // Create layersets and layers
         /** @var SourceInstanceEntityHandler $entityHandler */
         foreach ($definition['layersets'] as $id => $layerDefinitions) {
@@ -218,7 +235,7 @@ class ApplicationYAMLMapper
             $layerset
                 ->setId($id)
                 ->setTitle('YAML - ' . $id)
-                ->setApplication($application);
+            ;
 
             $weight = 0;
             foreach ($layerDefinitions as $id => $layerDefinition) {
@@ -235,12 +252,9 @@ class ApplicationYAMLMapper
                 $entityHandler->setParameters(array_merge($layerDefinition, $internDefinition));
                 $layerset->addInstance($instance);
             }
-            $application->addLayerset($layerset);
+            $layerSets[] = $layerset;
         }
-
-        $application->setSource(ApplicationEntity::SOURCE_YAML);
-
-        return $application;
+        return $layerSets;
     }
 
     /**
