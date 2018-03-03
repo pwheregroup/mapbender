@@ -3,6 +3,7 @@
 namespace Mapbender\CoreBundle\Component;
 
 use Mapbender\CoreBundle\Entity\Element as Entity;
+use Mapbender\CoreBundle\Utils\ArrayUtil;
 use Mapbender\ManagerBundle\Component\Mapper;
 use Mapbender\ManagerBundle\Form\Type\YAMLConfigurationType;
 use Symfony\Bundle\TwigBundle\TwigEngine;
@@ -456,25 +457,7 @@ abstract class Element
      */
     public static function mergeArrays($default, $main, $result)
     {
-        foreach ($main as $key => $value) {
-            if (is_array($value)) {
-                if (isset($default[$key])) {
-                    $result[$key] = Element::mergeArrays($default[$key], $main[$key], array());
-                } else {
-                    $result[$key] = $main[$key];
-                }
-            } else {
-                $result[$key] = $value;
-            }
-        }
-        if (is_array($default)) {
-            foreach ($default as $key => $value) {
-                if (!isset($result[$key])) {
-                    $result[$key] = $value;
-                }
-            }
-        }
-        return $result;
+        return ArrayUtil::mergeHashesRecursiveInto($result, $default, $main);
     }
 
     /**

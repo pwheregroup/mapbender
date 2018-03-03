@@ -105,4 +105,72 @@ class ArrayUtil
         $arrWithLcKeys = array_combine($lcKeys, array_values($arr));
         return static::getDefault($arrWithLcKeys, strtolower($key), $default);
     }
+
+    /**
+     * Legacy ALMOST-equivalent to array_replace_recursive($a, $b), but
+     * 1) result key ordering follows $b first, not $a
+     * 2) null values from $b will not integrate into result, $a values will be kept
+     *
+     * If neither quirk matters to you, just call array_replace_recursive directly.
+     *
+     * Used exclusively by (also legacy) Element::mergeArrays
+     *
+     * @param mixed[] $a
+     * @param mixed[] $b
+     * @return mixed[]
+     */
+    public static function mergeHashesRecursive($a, $b)
+    {
+        $result = array();
+        foreach ($b as $key => $value) {
+            if (is_array($value)) {
+                if (isset($a[$key])) {
+                    $result[$key] = static::mergeHashesRecursive($a[$key], $b[$key]);
+                } else {
+                    $result[$key] = $b[$key];
+                }
+            } else {
+                $result[$key] = $value;
+            }
+        }
+        if (is_array($a)) {
+            foreach ($a as $key => $value) {
+                if (!isset($result[$key])) {
+                    $result[$key] = $value;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Legacy emulation shim for Element::mergeArrays that enforces the passing of a "$result" into
+     * the merge operation via its signature. All known callers of Element::mergeArrays use an
+     * empty array though.
+     * We detect that and short-circuit to mergeHashesRecursive.
+     * Should $target ever be non-empty, we perform a three-way merge, $main into $default, then
+     * the result of that into $target.
+     *
+     * NOTE: if you do pass a target: use only 1D. Subarrays in $target are NOT handled recursively.
+     *       They are either copied unmodified or replaced entirely at the top level.
+     *
+     * Same quirks apply as mergeHashesRecursive:
+     * 1) result key ordering follows $b first, not $a
+     * 2) null values from $b will not integrate into resut, $a values will be kept
+     *
+     * @param mixed[] $target
+     * @param mixed[] $a
+     * @param mixed[] $b
+     * @return mixed[]
+     */
+    public static function mergeHashesRecursiveInto($target, $a, $b)
+    {
+        if ($target) {
+            $firstMergeResult = static::mergeHashesRecursive($a, $b);
+            return $firstMergeResult + $target;
+        } else {
+            return static::mergeHashesRecursive($a, $b);
+        }
+    }
+
 }
