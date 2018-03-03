@@ -2,6 +2,7 @@
 namespace Mapbender\WmsBundle\Component;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Persistence\ObjectManager;
 use Mapbender\CoreBundle\Component\KeywordUpdater;
 use Mapbender\CoreBundle\Component\SourceItemEntityHandler;
 use Mapbender\CoreBundle\Entity\SourceItem;
@@ -33,13 +34,26 @@ class WmsLayerSourceEntityHandler extends SourceItemEntityHandler
      */
     public function save()
     {
-        $this->container->get('doctrine')->getManager()->persist($this->entity);
-        foreach ($this->entity->getSublayer() as $sublayer) {
-            self::createHandler($this->container, $sublayer)->save();
+        /** @var ObjectManager $manager */
+        $manager = $this->container->get('doctrine')->getManager();
+        $this->persistRecursive($manager, $this->entity);
+    }
+
+    /**
+     * Persists the source layer and all child layers, recursively
+     *
+     * @param ObjectManager $manager
+     * @param WmsLayerSource $entity
+     */
+    public static function persistRecursive(ObjectManager $manager, WmsLayerSource $entity)
+    {
+        $manager->persist($entity);
+        foreach ($entity->getSublayer() as $sublayer) {
+            static::persistRecursive($manager, $sublayer);
         }
-        foreach ($this->entity->getKeywords() as $kwd) {
-            $kwd->setReferenceObject($this->entity);
-            $this->container->get('doctrine')->getManager()->persist($kwd);
+        foreach ($entity->getKeywords() as $kwd) {
+            $kwd->setReferenceObject($entity);
+            $manager->persist($kwd);
         }
     }
 

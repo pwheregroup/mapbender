@@ -1,6 +1,7 @@
 <?php
 namespace Mapbender\WmsBundle\Component;
 
+use Doctrine\Common\Persistence\ObjectManager;
 use Mapbender\CoreBundle\Component\SourceInstanceItemEntityHandler;
 use Mapbender\CoreBundle\Component\Utils;
 use Mapbender\CoreBundle\Entity\SourceInstance;
@@ -56,9 +57,22 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
      */
     public function save()
     {
-        $this->container->get('doctrine')->getManager()->persist($this->entity);
-        foreach ($this->entity->getSublayer() as $sublayer) {
-            self::createHandler($this->container, $sublayer)->save();
+        /** @var ObjectManager $manager */
+        $manager = $this->container->get('doctrine')->getManager();
+        $this->persistRecursive($manager, $this->entity);
+    }
+
+    /**
+     * Persists the instance layer and all child layers, recursively
+     *
+     * @param ObjectManager $manager
+     * @param WmsInstanceLayer $entity
+     */
+    public static function persistRecursive(ObjectManager $manager, WmsInstanceLayer $entity)
+    {
+        $manager->persist($entity);
+        foreach ($entity->getSublayer() as $sublayer) {
+            static::persistRecursive($manager, $sublayer);
         }
     }
 
@@ -73,7 +87,8 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
          *     before it can be removed
          */
         foreach ($this->entity->getSublayer() as $sublayer) {
-            self::createHandler($this->container, $sublayer)->remove();
+            $sublayerRemoveHandler = new WmsInstanceLayerEntityHandler($this->container, $sublayer);
+            $sublayerRemoveHandler->remove();
         }
 
         $this->container->get('doctrine')->getManager()->remove($this->entity);

@@ -3,7 +3,6 @@
 namespace Mapbender\WmsBundle\Element;
 
 use Mapbender\CoreBundle\Component\Element;
-use Mapbender\CoreBundle\Component\EntityHandler;
 use Mapbender\CoreBundle\Component\SourceInstanceEntityHandler;
 use Mapbender\WmsBundle\Component\DimensionInst;
 use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
@@ -143,8 +142,8 @@ class DimensionsHandler extends Element
         foreach ($this->application->getEntity()->getLayersets() as $layerset) {
             foreach ($layerset->getInstances() as $instance) {
                 if (key_exists($instance->getId(), $dimensionMap)) {
-                    /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $handler */
-                    $handler = EntityHandler::createHandler($this->container, $instance);
+                    /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $katze */
+                    $handler = SourceInstanceEntityHandler::createHandler($this->container, $instance);
                     $handler->mergeDimension($dimensionMap[$instance->getId()]);
                     /**
                      * This is pretty expensive, saves the entire Wms Instance and all layers,

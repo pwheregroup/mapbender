@@ -332,7 +332,7 @@ class Application
 
             foreach ($layerSet->layerObjects as $layer) {
                 /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $instHandler */
-                $instHandler = EntityHandler::createHandler($this->container, $layer);
+                $instHandler = SourceInstanceEntityHandler::createHandler($this->container, $layer);
                 $conf        = $instHandler->getConfiguration($this->container->get('signer'));
 
                 if (!$conf) {

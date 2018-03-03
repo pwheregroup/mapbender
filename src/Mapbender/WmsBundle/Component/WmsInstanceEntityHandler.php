@@ -86,7 +86,7 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
          *     doctrine:schema:update --force
          *     before it can be removed
          */
-        $layerHandler = self::createHandler($this->container, $this->entity->getRootlayer());
+        $layerHandler = new WmsInstanceLayerEntityHandler($this->container, $this->entity->getRootlayer());
         $layerHandler->remove();
 
         $this->container->get('doctrine')->getManager()->persist(
@@ -198,6 +198,10 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     protected function getRootLayerConfig()
     {
         $rootlayer = $this->entity->getRootlayer();
+        if (!$rootlayer) {
+            $message = get_class($this->entity) . "#{$this->entity->getId()} has no root layer!";
+            throw new \LogicException($message);
+        }
         $entityHandler = new WmsInstanceLayerEntityHandler($this->container, null);
         $rootLayerConfig = $entityHandler->generateConfiguration($rootlayer);
         return $rootLayerConfig;

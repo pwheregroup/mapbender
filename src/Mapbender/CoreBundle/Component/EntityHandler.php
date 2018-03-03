@@ -85,7 +85,8 @@ class EntityHandler
     /**
      * @param ContainerInterface $container
      * @param  Source|SourceInstance|object $entity
-     * @return SourceInstanceEntityHandler|null
+     * @return static|null
+     * @todo: never return null
      */
     public static function createHandler(ContainerInterface $container, $entity)
     {
