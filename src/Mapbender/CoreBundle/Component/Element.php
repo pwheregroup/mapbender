@@ -457,9 +457,7 @@ abstract class Element
     public static function mergeArrays($default, $main, $result)
     {
         foreach ($main as $key => $value) {
-            if ($value === null) {
-                $result[$key] = null;
-            } elseif (is_array($value)) {
+            if (is_array($value)) {
                 if (isset($default[$key])) {
                     $result[$key] = Element::mergeArrays($default[$key], $main[$key], array());
                 } else {
@@ -469,9 +467,9 @@ abstract class Element
                 $result[$key] = $value;
             }
         }
-        if ($default !== null && is_array($default)) {
+        if (is_array($default)) {
             foreach ($default as $key => $value) {
-                if (!isset($result[$key]) || (isset($result[$key]) && $result[$key] === null && $value !== null)) {
+                if (!isset($result[$key])) {
                     $result[$key] = $value;
                 }
             }
