@@ -63,7 +63,6 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         foreach ($layerSet->getInstances() as $instance) {
             /** @var WmsInstance $instance */
             $instance->setWeight($num);
-            $instance->updateConfiguration();
             $this->container->get('doctrine')->getManager()->persist($instance);
             $num++;
         }
@@ -122,7 +121,6 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
         $rootUpdateHandler = new WmsInstanceLayerEntityHandler($this->container, $this->entity->getRootlayer());
         $rootUpdateHandler->update($this->entity, $this->entity->getSource()->getRootlayer());
 
-        $this->entity->updateConfiguration();
         $this->container->get('doctrine')->getManager()->persist(
             $this->entity->getLayerset()->getApplication()->setUpdated(new \DateTime('now')));
         $this->container->get('doctrine')->getManager()->persist($this->entity);
@@ -144,10 +142,8 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      */
     public function getConfiguration(Signer $signer = null)
     {
-        if ($this->entity->getConfiguration() === null) {
-            $this->entity->updateConfiguration();
-        }
-        $configuration = $this->entity->getConfiguration();
+        $configuration = WmsInstanceConfiguration::entityToArray($this->entity);
+
         $layerConfig = $this->getRootLayerConfig();
         if ($layerConfig) {
             $configuration['children'] = array($layerConfig);
@@ -187,12 +183,11 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
     }
 
     /**
-     * Modifies the bound entity, populates `configuration` attribute, returns nothing
-     * @deprecated, call the entity method directly; you don't need a container to do so
+     * Does nothing, returns nothing
+     * @deprecated
      */
     public function generateConfiguration()
     {
-        $this->entity->updateConfiguration();
     }
 
     protected function getRootLayerConfig()

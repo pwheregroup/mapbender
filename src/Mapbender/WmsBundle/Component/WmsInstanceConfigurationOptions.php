@@ -15,7 +15,8 @@ use Mapbender\WmsBundle\Entity\WmsInstance;
  *     array and discared. The sanitization performed along the way is minimal.
  *
  * @see WmcParser110::parseLayer()
- * @see WmsInstance::updateConfiguration()
+ * @see WmsInstanceEntityHandler::getConfiguration()
+ * @see WmsInstanceConfiguration::fromEntity()
  * @internal
  */
 class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
