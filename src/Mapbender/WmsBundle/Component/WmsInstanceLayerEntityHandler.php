@@ -235,6 +235,7 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
     {
         $entity = $entity ?: $this->entity;
         $sourceItem = $entity->getSourceItem();
+        $scale = $sourceItem->getScaleRecursive();
         $configuration = array(
             "id" => strval($entity->getId()),
             "priority" => $entity->getPriority(),
@@ -243,10 +244,10 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
             "title" => $entity->getTitle(),
             "queryable" => $entity->getInfo(),
             "style" => $entity->getStyle(),
-            "minScale" => $entity->getMinScale() !== null ? floatval($entity->getMinScale()) : null,
-            "maxScale" => $entity->getMaxScale() !== null ? floatval($entity->getMaxScale()) : null
+            "minScale" => floatval($scale->getMin()) ?: null,
+            "maxScale" => floatval($scale->getMax()) ?: null,
         );
-        ;
+
         $srses = array();
         foreach ($sourceItem->getMergedBoundingBoxes(true) as $bbox) {
             $srses[$bbox->getSrs()] = $bbox->toCoordsArray();
