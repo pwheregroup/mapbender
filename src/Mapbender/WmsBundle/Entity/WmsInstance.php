@@ -598,25 +598,6 @@ class WmsInstance extends SourceInstance
     }
 
     /**
-     * Copies Extent and Default from passed DimensionInst to any DimensionInst stored
-     * in $this->dimensions if they match the same Type.
-     *
-     * @param DimensionInst $referenceDimension
-     * @deprecated only used by DimensionsHandler::postSave, which is also deprecated
-     */
-    public function reconfigureDimensions(DimensionInst $referenceDimension)
-    {
-        $dimensions = $this->getDimensions();
-        foreach ($dimensions as $dim) {
-            if ($dim->getType() === $referenceDimension->getType()) {
-                $dim->setExtent($referenceDimension->getExtent());
-                $dim->setDefault($referenceDimension->getDefault());
-            }
-        }
-        $this->setDimensions($dimensions);
-    }
-
-    /**
      * @param WmsSource $source
      */
     public function populateFromSource(WmsSource $source)

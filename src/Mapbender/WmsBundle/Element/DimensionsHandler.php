@@ -3,10 +3,10 @@
 namespace Mapbender\WmsBundle\Element;
 
 use Mapbender\CoreBundle\Component\Element;
-use Mapbender\CoreBundle\Component\SourceInstanceEntityHandler;
+use Mapbender\CoreBundle\Entity\SourceInstance;
 use Mapbender\WmsBundle\Component\DimensionInst;
-use Mapbender\WmsBundle\Component\WmsInstanceEntityHandler;
 use Mapbender\WmsBundle\Element\Type\DimensionsHandlerAdminType;
+use Mapbender\WmsBundle\Entity\WmsInstance;
 
 /**
  * Dimensions handler
@@ -94,21 +94,11 @@ class DimensionsHandler extends Element
         return 'MapbenderWmsBundle:ElementAdmin:dimensionshandler.html.twig';
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function render()
+    public function getFrontendTemplatePath($suffix = '.html.twig')
     {
-        return $this->container->get('templating')->render(
-            'MapbenderWmsBundle:Element:dimensionshandler.html.twig',
-            array(
-                'id' => $this->getId(),
-                "title" => $this->getTitle(),
-                'configuration' => $this->getConfiguration()
-            )
-        );
+        return 'MapbenderWmsBundle:Element:dimensionshandler.html.twig';
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -123,37 +113,72 @@ class DimensionsHandler extends Element
         }
         return $configuration;
     }
-    
-    /**
-     * @todo: remove this; adjusted layerset configuration should be generated on application load, not
-     *        persisted into the db.
-     * @inheritdoc
-     */
-    public function postSave()
+
+    public function updateAppConfig($config)
     {
-        $configuration = parent::getConfiguration();
+        $dhConfig = $this->getConfiguration();
+        if (empty($dhConfig['dimensionsets'])) {
+            return $config;
+        }
         $dimensionMap = array();
-        foreach ($configuration['dimensionsets'] as $key => $value) {
+        foreach ($dhConfig['dimensionsets'] as $key => $value) {
             for ($i = 0; isset($value['group']) && count($value['group']) > $i; $i++) {
                 $item = explode("-", $value['group'][$i]);
                 $dimensionMap[$item[0]] = $value['dimension'];
             }
         }
-        foreach ($this->application->getEntity()->getLayersets() as $layerset) {
-            foreach ($layerset->getInstances() as $instance) {
-                if (key_exists($instance->getId(), $dimensionMap)) {
-                    /** @var SourceInstanceEntityHandler|WmsInstanceEntityHandler $katze */
-                    $handler = SourceInstanceEntityHandler::createHandler($this->container, $instance);
-                    $handler->mergeDimension($dimensionMap[$instance->getId()]);
-                    /**
-                     * This is pretty expensive, saves the entire Wms Instance and all layers,
-                     * what exactly is the goal here?
-                     * @todo: figure out if this is necessary anymore, reduce to minimal db
-                     *        interaction
-                     */
-                    $handler->save();
+        if (empty($dimensionMap)) {
+            return $config;
+        }
+
+        foreach ($config['layersets'] as &$layerList) {
+            foreach ($layerList as &$layerMap) {
+                foreach ($layerMap as $layerId => &$layerDef) {
+                    if (empty($dimensionMap[$layerId]) || empty($layerDef['configuration']['options']['dimensions'])) {
+                        // layer is not controllable through DimHandler, leave its config alone
+                        continue;
+                    }
+                    $this->updateDimensionConfig($layerDef['configuration']['options']['dimensions'], $dimensionMap[$layerId]);
                 }
             }
         }
+        return $config;
+    }
+
+    /**
+     * Updates the $target list of dimension config arrays by reference with our own settings (from backend).
+     *
+     * @param mixed[] $target
+     * @param mixed[] $dimensionConfig
+     */
+    public static function updateDimensionConfig(&$target, $dimensionConfig)
+    {
+        foreach ($target as &$dimensionDef) {
+            if ($dimensionDef['type'] == $dimensionConfig['type']) {
+                $dimensionDef['extent'] = $dimensionConfig['extent'];
+                $dimensionDef['default'] = $dimensionConfig['default'];
+            }
+        }
+    }
+
+
+    /**
+     * Copies Extent and Default from passed DimensionInst to any DimensionInst stored
+     * in given SourceInstance->dimensions, if they match the same Type.
+     *
+     * @param SourceInstance|WmsInstance $instance
+     * @param DimensionInst $referenceDimension
+     * @deprecated was only used by DimensionsHandler::postSave, which was removed
+     *             now a dangling api fulfillment for WmsInstanceEntityHandler::
+     */
+    public static function reconfigureDimensions(SourceInstance $instance, DimensionInst $referenceDimension)
+    {
+        foreach ($instance->getDimensions() as $dim) {
+            if ($dim->getType() === $referenceDimension->getType()) {
+                $dim->setExtent($referenceDimension->getExtent());
+                $dim->setDefault($referenceDimension->getDefault());
+            }
+        }
+        $instance->setDimensions($instance->getDimensions());
     }
 }

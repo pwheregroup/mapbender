@@ -8,6 +8,7 @@ use Mapbender\CoreBundle\Component\SourceInstanceEntityHandler;
 use Mapbender\CoreBundle\Entity\Source;
 use Mapbender\CoreBundle\Utils\ArrayUtil;
 use Mapbender\CoreBundle\Utils\UrlUtil;
+use Mapbender\WmsBundle\Element\DimensionsHandler;
 use Mapbender\WmsBundle\Entity\WmsInstance;
 use Symfony\Component\Security\Core\User\AdvancedUserInterface;
 
@@ -268,11 +269,11 @@ class WmsInstanceEntityHandler extends SourceInstanceEntityHandler
      * in bound WmsInstance that match the same Type.
      *
      * @param DimensionInst $dimension
-     * @deprecated
+     * @deprecated we do not modify entities for presentation or frontend purposes
      */
     public function mergeDimension($dimension)
     {
-        $this->entity->reconfigureDimensions($dimension);
+        DimensionsHandler::reconfigureDimensions($this->entity, $dimension);
     }
 
     /**
