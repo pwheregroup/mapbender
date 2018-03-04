@@ -10,6 +10,7 @@ use Mapbender\CoreBundle\Entity\RegionProperties;
 use Mapbender\CoreBundle\Utils\ArrayUtil;
 use Mapbender\CoreBundle\Utils\ArrayUtilYamlQuirks;
 use Mapbender\WmsBundle\Component\LegendUrl;
+use Mapbender\WmsBundle\Component\MinMax;
 use Mapbender\WmsBundle\Component\OnlineResource;
 use Mapbender\WmsBundle\Component\RequestInformation;
 use Mapbender\WmsBundle\Component\Style;
@@ -314,12 +315,13 @@ class ApplicationYAMLMapper
             ->setSource($source)
             ->setTitle($instance->getTitle())
             ->setId($source->getId() . '_' . $num);
+        $scale = new MinMax(ArrayUtil::getDefault($configuration, 'minScale', null),
+                            ArrayUtil::getDefault($configuration, 'maxScale', null));
+        $layersourceroot->setScale($scale);
         $source->addLayer($layersourceroot);
         $rootInstLayer = new WmsInstanceLayer();
         $rootInstLayer->setTitle($instance->getTitle())
             ->setId($instance->getId() . "_" . $num)
-            ->setMinScale(!isset($configuration["minScale"]) ? null : $configuration["minScale"])
-            ->setMaxScale(!isset($configuration["maxScale"]) ? null : $configuration["maxScale"])
             ->setSelected(!isset($configuration["visible"]) ? false : $configuration["visible"])
             ->setPriority($num)
             ->setSourceItem($layersourceroot)
@@ -350,13 +352,14 @@ class ApplicationYAMLMapper
                 $style->setLegendUrl($legendUrl);
                 $layersource->addStyle($style);
             }
+            $scale = new MinMax(ArrayUtil::getDefault($layerDef, 'minScale', null),
+                                ArrayUtil::getDefault($layerDef, 'maxScale', null));
+            $layersource->setScale($scale);
             $layersourceroot->addSublayer($layersource);
             $source->addLayer($layersource);
             $layerInst       = new WmsInstanceLayer();
             $layerInst->setTitle($layerDef["title"])
                 ->setId($instance->getId() . '_' . $num)
-                ->setMinScale(!isset($layerDef["minScale"]) ? null : $layerDef["minScale"])
-                ->setMaxScale(!isset($layerDef["maxScale"]) ? null : $layerDef["maxScale"])
                 ->setSelected(!isset($layerDef["visible"]) ? false : $layerDef["visible"])
                 ->setInfo(!isset($layerDef["queryable"]) ? false : $layerDef["queryable"])
                 ->setParent($rootInstLayer)

@@ -135,17 +135,6 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
             }
         }
         $this->entity->setPriority($wmslayersource->getPriority());
-        $origMinMax = $wmslayersource->getScaleRecursive();
-        $scaleMinMax = null;
-        if ($origMinMax) {
-            $minInrange = $origMinMax->getInRange($this->entity->getMinScale());
-            $maxInrange = $origMinMax->getInRange($this->entity->getMaxScale());
-            $scaleMinMax = new MinMax($minInrange, $maxInrange);
-        } else {
-            $scaleMinMax = new MinMax($this->entity->getMinScale(), $this->entity->getMaxScale());
-        }
-        $this->entity->setMinScale($scaleMinMax ? $scaleMinMax->getMin() : null);
-        $this->entity->setMaxScale($scaleMinMax ? $scaleMinMax->getMax() : null);
         $queryable = Utils::getBool($wmslayersource->getQueryable(), true);
         if ($queryable === '0') {
             $queryable = false;

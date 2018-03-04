@@ -4,13 +4,10 @@ namespace Mapbender\WmsBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Mapbender\CoreBundle\Component\BoundingBox;
 use Mapbender\CoreBundle\Component\Utils;
 use Mapbender\CoreBundle\Entity\SourceInstanceItem;
 use Mapbender\CoreBundle\Entity\SourceItem;
 use Mapbender\CoreBundle\Entity\SourceInstance;
-use Mapbender\WmsBundle\Entity\WmsInstance;
-use Mapbender\WmsBundle\Entity\WmsLayerSource;
 
 /**
  * WmsInstanceLayer class
@@ -101,11 +98,13 @@ class WmsInstanceLayer extends SourceInstanceItem
     protected $allowreorder = true;
 
     /**
+     * @deprecated column serves no purpose and will be removed
      * @ORM\Column(type="float", nullable=true)
      */
     protected $minScale;
 
     /**
+     * @deprecated column serves no purpose and will be removed
      * @ORM\Column(type="float", nullable=true)
      */
     protected $maxScale;
@@ -405,14 +404,15 @@ class WmsInstanceLayer extends SourceInstanceItem
     }
 
     /**
-     * Set minScale
+     * Does nothing.
+     * @deprecated we do not store precomputed frontend config
      *
      * @param float|null $value
-     * @return WmsInstanceLayer
+     * @return $this
+     * @noinspection PhpUnusedParameterInspection $value
      */
     public function setMinScale($value)
     {
-        $this->minScale = $value === null ? null : floatval($value);
         return $this;
     }
 
@@ -424,32 +424,22 @@ class WmsInstanceLayer extends SourceInstanceItem
      */
     public function getMinScale($recursive = false)
     {
-        $value = $this->minScale;
-
-        if ($value == INF) {
-            $value = null;
-        }
-
-        if ($recursive && $value === null && $this->getParent()) {
-            $value = $this->getParent()->getMinScale($recursive);
-        }
-
-        if ($value !== null) {
-            $value = floatval($value);
-        }
-
-        return $value;
+        $sourceItem = $this->getSourceItem();
+        $scale = $recursive ? $sourceItem->getScaleRecursive() : $sourceItem->getScale();
+        // NOTE: $sourceItem->getScale() may return null
+        return $scale ? $scale->getMin() : null;
     }
 
     /**
-     * Set maximum scale hint
+     * Does nothing.
+     * @deprecated we do not store precomputed frontend config
      *
      * @param float|null $value
-     * @return WmsInstanceLayer
+     * @return $this
+     * @noinspection PhpUnusedParameterInspection $value
      */
     public function setMaxScale($value)
     {
-        $this->maxScale = $value === null ? null : floatval($value);
         return $this;
     }
 
@@ -461,21 +451,10 @@ class WmsInstanceLayer extends SourceInstanceItem
      */
     public function getMaxScale($recursive = false)
     {
-        $value = $this->maxScale;
-
-        if ($value == INF) {
-            $value = null;
-        }
-
-        if ($recursive && $value === null && $this->getParent()) {
-            $value = $this->getParent()->getMaxScale($recursive);
-        }
-
-        if ($value !== null) {
-            $value = floatval($value);
-        }
-
-        return $value;
+        $sourceItem = $this->getSourceItem();
+        $scale = $recursive ? $sourceItem->getScaleRecursive() : $sourceItem->getScale();
+        // NOTE: $sourceItem->getScale() may return null
+        return $scale ? $scale->getMin() : null;
     }
 
     /**
@@ -580,9 +559,6 @@ class WmsInstanceLayer extends SourceInstanceItem
         $this->setSourceInstance($instance);
         $this->setSourceItem($layerSource);
         $this->setTitle($layerSource->getTitle());
-
-        $this->setMinScale($layerSource->getMinScale());
-        $this->setMaxScale($layerSource->getMaxScale());
 
         $queryable = $layerSource->getQueryable();
         $this->setInfo(Utils::getBool($queryable));
