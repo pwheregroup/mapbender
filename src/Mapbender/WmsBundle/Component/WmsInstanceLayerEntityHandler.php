@@ -40,19 +40,6 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
     }
 
     /**
-     * @param WmsInstance $sourceInstance
-     * @param WmsLayerSource $layerSource
-     * @param int $num
-     * @return WmsInstanceLayer
-     */
-    public static function entityFactory(WmsInstance $sourceInstance, WmsLayerSource $layerSource, $num = 0)
-    {
-        $newEntity = new WmsInstanceLayer();
-        $newEntity->populateFromSource($sourceInstance, $layerSource, $num);
-        return $newEntity;
-    }
-
-    /**
      * @inheritdoc
      */
     public function save()
@@ -68,7 +55,7 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
      * @param ObjectManager $manager
      * @param WmsInstanceLayer $entity
      */
-    public static function persistRecursive(ObjectManager $manager, WmsInstanceLayer $entity)
+    private static function persistRecursive(ObjectManager $manager, WmsInstanceLayer $entity)
     {
         $manager->persist($entity);
         foreach ($entity->getSublayer() as $sublayer) {
@@ -139,14 +126,12 @@ class WmsInstanceLayerEntityHandler extends SourceInstanceItemEntityHandler
                 $layerInstanceHandler = new WmsInstanceLayerEntityHandler($this->container, $layer);
                 $layerInstanceHandler->update($instance, $wmslayersourceSub);
             } else {
-                $sublayerInstance = WmsInstanceLayerEntityHandler::entityFactory($instance, $wmslayersourceSub, $wmslayersourceSub->getPriority());
+                $sublayerInstance = new WmsInstanceLayer();
+                $sublayerInstance->populateFromSource($instance, $wmslayersourceSub, $wmslayersourceSub->getPriority());
                 $sublayerInstance->setParent($this->entity);
                 $instance->getLayers()->add($sublayerInstance);
                 $this->entity->getSublayer()->add($sublayerInstance);
-                $manager->persist($sublayerInstance);
-                foreach ($sublayerInstance->getSublayer() as $lay) {
-                    $manager->persist($lay);
-                }
+                $this->persistRecursive($manager, $sublayerInstance);
             }
         }
         $this->entity->setPriority($wmslayersource->getPriority());

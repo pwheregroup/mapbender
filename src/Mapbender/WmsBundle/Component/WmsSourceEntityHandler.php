@@ -47,7 +47,7 @@ class WmsSourceEntityHandler extends SourceEntityHandler
      * @param ObjectManager $manager
      * @param WmsSource $entity
      */
-    public static function persistRecursive(ObjectManager $manager, WmsSource $entity)
+    private static function persistRecursive(ObjectManager $manager, WmsSource $entity)
     {
         $rootLayer = $entity->getRootlayer();
         if ($rootLayer) {
