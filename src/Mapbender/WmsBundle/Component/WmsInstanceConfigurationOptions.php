@@ -353,7 +353,7 @@ class WmsInstanceConfigurationOptions extends InstanceConfigurationOptions
         }
         $rootLayer = $instance->getRootlayer();
         $boundingBoxMap = array();
-        foreach ($rootLayer->getSourceItem()->getMergedBoundingBoxes() as $bbox) {
+        foreach ($rootLayer->getSourceItem()->getMergedBoundingBoxes(false) as $bbox) {
             $boundingBoxMap[$bbox->getSrs()] = $bbox->toCoordsArray();
         }
         return static::fromArray(array(
